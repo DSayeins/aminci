@@ -1,0 +1,174 @@
+import 'package:equatable/equatable.dart';
+
+enum VoucherStatus { pending, active, expired }
+
+class Voucher extends Equatable {
+  final int id;
+  final int routerId;
+  final String code;
+  final String password;
+  final String profileName;
+  final double price;
+  final VoucherStatus status;
+  final DateTime createdAt;
+  final String createdBy;
+
+  // --- Champs MikroTik synchronisés ---
+
+  /// Identifiant interne MikroTik (ex: `*429`). Nécessaire pour set/remove.
+  final String? mikrotikId;
+
+  /// Serveur hotspot sur lequel l'utilisateur est enregistré (ex: `hotspot1`).
+  final String? server;
+
+  /// Commentaire libre (ex: référence de vente, opérateur).
+  final String? comment;
+
+  /// Quota de durée de connexion cumulée (ex: `1w1d`, `3h`). Vide = illimité.
+  final String? limitUptime;
+
+  /// Quota total de données (octets). 0 = illimité.
+  final int limitBytesTotal;
+
+  /// Durée de connexion déjà consommée depuis la dernière activation (ex: `2h30m`).
+  final String? uptime;
+
+  /// Données téléchargées (octets).
+  final int bytesIn;
+
+  /// Données envoyées (octets).
+  final int bytesOut;
+
+  /// Voucher désactivé manuellement sur MikroTik.
+  final bool disabled;
+
+  const Voucher({
+    required this.id,
+    required this.routerId,
+    required this.code,
+    required this.password,
+    required this.profileName,
+    required this.price,
+    required this.status,
+    required this.createdAt,
+    required this.createdBy,
+    this.mikrotikId,
+    this.server,
+    this.comment,
+    this.limitUptime,
+    this.limitBytesTotal = 0,
+    this.uptime,
+    this.bytesIn = 0,
+    this.bytesOut = 0,
+    this.disabled = false,
+  });
+
+  Voucher copyWith({
+    int? id,
+    int? routerId,
+    String? code,
+    String? password,
+    String? profileName,
+    double? price,
+    VoucherStatus? status,
+    DateTime? createdAt,
+    String? createdBy,
+    String? mikrotikId,
+    String? server,
+    String? comment,
+    String? limitUptime,
+    int? limitBytesTotal,
+    String? uptime,
+    int? bytesIn,
+    int? bytesOut,
+    bool? disabled,
+  }) {
+    return Voucher(
+      id: id ?? this.id,
+      routerId: routerId ?? this.routerId,
+      code: code ?? this.code,
+      password: password ?? this.password,
+      profileName: profileName ?? this.profileName,
+      price: price ?? this.price,
+      status: status ?? this.status,
+      createdAt: createdAt ?? this.createdAt,
+      createdBy: createdBy ?? this.createdBy,
+      mikrotikId: mikrotikId ?? this.mikrotikId,
+      server: server ?? this.server,
+      comment: comment ?? this.comment,
+      limitUptime: limitUptime ?? this.limitUptime,
+      limitBytesTotal: limitBytesTotal ?? this.limitBytesTotal,
+      uptime: uptime ?? this.uptime,
+      bytesIn: bytesIn ?? this.bytesIn,
+      bytesOut: bytesOut ?? this.bytesOut,
+      disabled: disabled ?? this.disabled,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'router_id': routerId,
+      'code': code,
+      'password': password,
+      'profile_name': profileName,
+      'price': price,
+      'status': status.name,
+      'created_at': createdAt.millisecondsSinceEpoch ~/ 1000,
+      'created_by': createdBy,
+      'mikrotik_id': mikrotikId,
+      'server': server,
+      'comment': comment,
+      'limit_uptime': limitUptime,
+      'limit_bytes_total': limitBytesTotal,
+      'uptime': uptime,
+      'bytes_in': bytesIn,
+      'bytes_out': bytesOut,
+      'disabled': disabled ? 1 : 0,
+    };
+  }
+
+  factory Voucher.fromMap(Map<String, dynamic> map) {
+    return Voucher(
+      id: (map['id'] ?? 0) as int,
+      routerId: (map['router_id'] ?? 0) as int,
+      code: (map['code'] ?? '') as String,
+      password: (map['password'] ?? '') as String,
+      profileName: (map['profile_name'] ?? '') as String,
+      price: (map['price'] ?? 0.0) as double,
+      status: VoucherStatus.values.byName((map['status'] ?? 'pending') as String),
+      createdAt: DateTime.fromMillisecondsSinceEpoch(((map['created_at'] ?? 0) as int) * 1000),
+      createdBy: (map['created_by'] ?? '') as String,
+      mikrotikId: map['mikrotik_id'] as String?,
+      server: map['server'] as String?,
+      comment: map['comment'] as String?,
+      limitUptime: map['limit_uptime'] as String?,
+      limitBytesTotal: (map['limit_bytes_total'] ?? 0) as int,
+      uptime: map['uptime'] as String?,
+      bytesIn: (map['bytes_in'] ?? 0) as int,
+      bytesOut: (map['bytes_out'] ?? 0) as int,
+      disabled: ((map['disabled'] ?? 0) as int) == 1,
+    );
+  }
+
+  /// Quota de données formaté lisiblement (ex: `5.0 Go`, `500 Mo`).
+  String get limitBytesFmt {
+    if (limitBytesTotal == 0) return 'illimité';
+    final gb = limitBytesTotal / 1073741824;
+    if (gb >= 1) return '${gb.toStringAsFixed(1)} Go';
+    final mb = limitBytesTotal / 1048576;
+    if (mb >= 1) return '${mb.toStringAsFixed(0)} Mo';
+    return '$limitBytesTotal o';
+  }
+
+  /// Données consommées formatées (download + upload).
+  String get bytesTotalFmt {
+    final total = bytesIn + bytesOut;
+    if (total == 0) return '0';
+    final mb = total / 1048576;
+    if (mb >= 1) return '${mb.toStringAsFixed(1)} Mo';
+    return '$total o';
+  }
+
+  @override
+  List<Object?> get props => [id, routerId, code, profileName, status, createdAt];
+}

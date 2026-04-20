@@ -1,0 +1,8 @@
+include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Désactivé : use_null_aware_elements suggère ?key: value qui teste la CLÉ,
+    # pas la valeur — inapplicable quand on veut filtrer les valeurs nulles
+    # d'une map avec des clés littérales non-nullables.
+    use_null_aware_elements: false

@@ -1,56 +1,23 @@
-import 'dart:convert';
-import 'dart:math';
-
-import 'package:crypto/crypto.dart';
 import 'package:dartz/dartz.dart';
 
-import 'package:aminci/core/database/database_helper.dart';
+import 'package:aminci/core/error/error_mapper.dart';
 import 'package:aminci/core/error/failures.dart';
+import 'package:aminci/core/models/preference.dart';
+import 'package:aminci/core/models/router.dart';
+import 'package:aminci/core/models/user.dart';
+import 'package:aminci/features/setup/data/datasources/setup_local_datasource.dart';
 import 'package:aminci/features/setup/domain/repository/setup_repository.dart';
 
-/// Implémentation sqflite de [SetupRepository].
-///
-/// Réutilise le même schéma de hachage que [AuthRepositoryImpl] :
-/// SHA-256 avec salt aléatoire 16 octets, format `"<salt_b64>:<sha256_hex>"`.
 class SetupRepositoryImpl implements SetupRepository {
-  final DatabaseHelper _db;
+  final SetupLocalDatasourceImpl _datasource;
 
-  const SetupRepositoryImpl(this._db);
+  const SetupRepositoryImpl(this._datasource);
 
   @override
-  Future<Either<Failure, Unit>> createAdminAccount({
-    required String username,
-    required String password,
-  }) async {
-    if (username.trim().isEmpty || password.isEmpty) {
-      return const Left(ValidationFailure('Nom d\'utilisateur et mot de passe requis'));
-    }
-
-    try {
-      final db = await _db.database;
-      await db.insert('users', {
-        'username': username.trim(),
-        'password_hash': _hash(password),
-        'role': 'admin',
-      });
-      return const Right(unit);
-    } catch (_) {
-      return const Left(StorageFailure('Impossible de créer le compte administrateur'));
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
-  String _hash(String password) {
-    final salt = _salt();
-    final digest = sha256.convert(utf8.encode('$salt:$password'));
-    return '$salt:$digest';
-  }
-
-  String _salt() {
-    final bytes = List<int>.generate(16, (_) => Random.secure().nextInt(256));
-    return base64Url.encode(bytes);
+  Future<Either<Failure, Unit>> create({required User user, required MikroTikRouter router, Preference? preference}) {
+    return ErrorMapper.guard(() async {
+      await _datasource.create(user: user, router: router, preference: preference);
+      return unit;
+    }, fallbackMessage: 'Impossible de terminer la configuration initiale');
   }
 }

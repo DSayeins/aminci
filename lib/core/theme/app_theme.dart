@@ -206,10 +206,6 @@ abstract final class AppTheme {
     ),
   );
 
-  // -------------------------------------------------------------------------
-  // COLOR SCHEME
-  // -------------------------------------------------------------------------
-
   static const ColorScheme _colorScheme = ColorScheme.light(
     primary: AppColors.primary,
     onPrimary: AppColors.textOnPrimary,

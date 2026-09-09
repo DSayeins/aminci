@@ -16,7 +16,14 @@ final class LaunchFirstTime extends LaunchState {}
 
 /// Session active trouvée — utilisateur déjà connecté.
 /// → rediriger directement vers le shell principal.
-final class LaunchAuthenticated extends LaunchState {}
+final class LaunchAuthenticated extends LaunchState {
+  final User user;
+
+  const LaunchAuthenticated(this.user);
+
+  @override
+  List<Object> get props => [user];
+}
 
 /// Aucune session active — app déjà configurée.
 /// → rediriger vers l'écran de login.

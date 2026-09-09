@@ -7,69 +7,44 @@ sealed class RoutersState extends Equatable {
   List<Object> get props => [];
 }
 
-/// État initial avant tout chargement.
-final class RoutersInitial extends RoutersState {}
-
-/// Chargement en cours.
-final class RoutersLoading extends RoutersState {}
-
-/// Liste chargée avec succès.
-final class RoutersListLoaded extends RoutersState {
-  final List<MikroTikRouter> routers;
-
-  const RoutersListLoaded(this.routers);
-
-  @override
-  List<Object> get props => [routers];
+class RoutersInitial extends RoutersState {
+  const RoutersInitial();
 }
 
-/// Opération (ajout / modification / suppression) réussie.
-/// Contient la liste mise à jour.
-final class RoutersOperationSuccess extends RoutersState {
+class RoutersLoading extends RoutersState {
+  const RoutersLoading();
+}
+
+/// Liste chargée. [isBusy] indique qu'une opération (ajout/suppression) est en cours.
+/// [selectedRouter] est le routeur actif pour le dashboard.
+class RoutersLoaded extends RoutersState {
   final List<MikroTikRouter> routers;
+  final bool isBusy;
+  final MikroTikRouter? selectedRouter;
+
+  const RoutersLoaded(this.routers, {this.isBusy = false, this.selectedRouter});
+
+  RoutersLoaded copyWith({
+    List<MikroTikRouter>? routers,
+    bool? isBusy,
+    MikroTikRouter? selectedRouter,
+  }) =>
+      RoutersLoaded(
+        routers ?? this.routers,
+        isBusy: isBusy ?? this.isBusy,
+        selectedRouter: selectedRouter ?? this.selectedRouter,
+      );
+
+  @override
+  List<Object> get props => [routers, isBusy, if (selectedRouter != null) selectedRouter!];
+}
+
+class RoutersError extends RoutersState {
   final String message;
-
-  const RoutersOperationSuccess({required this.routers, required this.message});
-
-  @override
-  List<Object> get props => [routers, message];
-}
-
-/// Test de connexion en cours pour le routeur [routerId].
-final class RouterTestingConnection extends RoutersState {
   final List<MikroTikRouter> routers;
-  final int routerId;
 
-  const RouterTestingConnection({required this.routers, required this.routerId});
-
-  @override
-  List<Object> get props => [routers, routerId];
-}
-
-/// Résultat du test de connexion.
-final class RouterConnectionResult extends RoutersState {
-  final List<MikroTikRouter> routers;
-  final int routerId;
-  final bool success;
-  final String message;
-
-  const RouterConnectionResult({
-    required this.routers,
-    required this.routerId,
-    required this.success,
-    required this.message,
-  });
+  const RoutersError(this.message, {this.routers = const []});
 
   @override
-  List<Object> get props => [routers, routerId, success, message];
-}
-
-/// Erreur sur n'importe quelle opération.
-final class RoutersError extends RoutersState {
-  final String message;
-
-  const RoutersError(this.message);
-
-  @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, routers];
 }

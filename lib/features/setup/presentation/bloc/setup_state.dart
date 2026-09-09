@@ -1,27 +1,37 @@
 part of 'setup_bloc.dart';
 
 sealed class SetupState extends Equatable {
-  const SetupState();
+  /// Étape active du wizard (0 = compte admin, 1 = routeur, 2 = préférences).
+  final int currentStep;
+
+  const SetupState(this.currentStep);
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [currentStep];
 }
 
-/// État initial — formulaire vide, prêt à saisir.
-final class SetupInitial extends SetupState {}
+final class SetupInitial extends SetupState {
+  const SetupInitial() : super(0);
+}
 
-/// Création du compte en cours.
-final class SetupLoading extends SetupState {}
+/// Navigation entre les étapes du wizard, hors soumission.
+final class SetupInProgress extends SetupState {
+  const SetupInProgress(super.currentStep);
+}
 
-/// Compte créé avec succès — l'UI peut naviguer vers l'écran de login.
-final class SetupSuccess extends SetupState {}
+final class SetupLoading extends SetupState {
+  const SetupLoading(super.currentStep);
+}
 
-/// Échec de la création — [message] à afficher à l'utilisateur.
+final class SetupSuccess extends SetupState {
+  const SetupSuccess(super.currentStep);
+}
+
 final class SetupError extends SetupState {
   final String message;
 
-  const SetupError(this.message);
+  const SetupError(this.message, super.currentStep);
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, currentStep];
 }

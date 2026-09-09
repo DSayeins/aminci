@@ -1,6 +1,5 @@
+import 'package:aminci/core/enum/router_os_version.dart';
 import 'package:equatable/equatable.dart';
-
-enum RouterOsVersion { v6, v7 }
 
 class MikroTikRouter extends Equatable {
   final int id;
@@ -49,7 +48,6 @@ class MikroTikRouter extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'name': name,
       'ip': ip,
       'port': port,

@@ -1,18 +1,15 @@
-import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
-import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
-import 'package:aminci/features/setup/presentation/bloc/setup_bloc.dart';
-import 'package:aminci/features/vouchers/presentation/bloc/vouchers_bloc.dart';
+import 'package:aminci/features/login/presentation/bloc/login_bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-
 import 'package:aminci/core/di/service_locator.dart';
+import 'package:aminci/core/router/app_router.dart';
 import 'package:aminci/core/theme/app_theme.dart';
-import 'package:aminci/core/theme/theme_cubit.dart';
-import 'package:aminci/features/app/presentation/bloc/app_bloc.dart';
-import 'package:aminci/features/auth/presentation/bloc/auth_bloc.dart';
+import 'package:aminci/features/hotspot/presentation/bloc/hotspot_bloc.dart';
 import 'package:aminci/features/launch/presentation/bloc/launch_bloc.dart';
-import 'package:aminci/features/launch/presentation/screens/launch_screen.dart';
+import 'package:aminci/features/logout/presentation/bloc/logout_bloc.dart';
+import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
+import 'package:aminci/features/setup/presentation/bloc/setup_bloc.dart';
 import 'package:window_manager/window_manager.dart';
 
 void main() async {
@@ -20,13 +17,7 @@ void main() async {
   await windowManager.ensureInitialized();
   sqfliteFfiInit();
 
-  const options = WindowOptions(
-    size: Size(1366, 800),
-    minimumSize: Size(1280, 800),
-    center: true,
-    title: 'Aminci',
-    titleBarStyle: TitleBarStyle.normal,
-  );
+  const options = WindowOptions(center: true, title: 'Aminci', titleBarStyle: TitleBarStyle.normal);
 
   await windowManager.waitUntilReadyToShow(options, () async {
     await windowManager.show();
@@ -34,17 +25,16 @@ void main() async {
   });
 
   await setupServiceLocator();
+
   runApp(
     MultiBlocProvider(
       providers: [
-        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit()),
         BlocProvider<LaunchBloc>(create: (_) => sl<LaunchBloc>()),
-        BlocProvider<AuthBloc>(create: (_) => sl<AuthBloc>()),
-        BlocProvider<AppBloc>(create: (_) => sl<AppBloc>()),
+        BlocProvider<LoginBloc>(create: (_) => sl<LoginBloc>()),
+        BlocProvider<LogoutBloc>(create: (_) => sl<LogoutBloc>()),
         BlocProvider<SetupBloc>(create: (_) => sl<SetupBloc>()),
-        BlocProvider<RoutersBloc>(create: (_) => sl<RoutersBloc>()),
-        BlocProvider<ProfilesBloc>(create: (_) => sl<ProfilesBloc>()),
-        BlocProvider<VouchersBloc>(create: (_) => sl<VouchersBloc>()),
+        BlocProvider<RoutersBloc>(create: (_) => sl<RoutersBloc>()..add(const RoutersLoadRequested())),
+        BlocProvider<HotspotBloc>(create: (_) => sl<HotspotBloc>()),
       ],
       child: const AminciApp(),
     ),
@@ -56,17 +46,13 @@ class AminciApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ThemeCubit, ThemeMode>(
-      builder: (context, themeMode) {
-        return MaterialApp(
-          title: 'Aminci',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppThemeDark.dark,
-          themeMode: themeMode,
-          home: const LaunchScreen(),
-        );
-      },
+    return MaterialApp.router(
+      title: 'Aminci',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.light,
+      darkTheme: AppThemeDark.dark,
+      themeMode: ThemeMode.light,
+      routerConfig: appRouter,
     );
   }
 }

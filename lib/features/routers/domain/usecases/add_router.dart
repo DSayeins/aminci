@@ -6,22 +6,7 @@ import 'package:aminci/features/routers/domain/repository/routers_repository.dar
 
 class AddRouter {
   final RoutersRepository _repository;
+  const AddRouter(this._repository);
 
-  AddRouter(this._repository);
-
-  Future<Either<Failure, MikroTikRouter>> call({
-    required String name,
-    required String ip,
-    required int port,
-    required String username,
-    required String password,
-    required RouterOsVersion rosVersion,
-  }) => _repository.addRouter(
-        name: name,
-        ip: ip,
-        port: port,
-        username: username,
-        password: password,
-        rosVersion: rosVersion,
-      );
+  Future<Either<Failure, MikroTikRouter>> call(MikroTikRouter router) => _repository.create(router);
 }

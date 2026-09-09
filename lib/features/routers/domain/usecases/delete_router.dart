@@ -5,8 +5,7 @@ import 'package:aminci/features/routers/domain/repository/routers_repository.dar
 
 class DeleteRouter {
   final RoutersRepository _repository;
+  const DeleteRouter(this._repository);
 
-  DeleteRouter(this._repository);
-
-  Future<Either<Failure, Unit>> call(int id) => _repository.deleteRouter(id);
+  Future<Either<Failure, void>> call(int id) => _repository.delete(id);
 }

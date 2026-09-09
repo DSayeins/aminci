@@ -6,8 +6,7 @@ import 'package:aminci/features/routers/domain/repository/routers_repository.dar
 
 class GetRouters {
   final RoutersRepository _repository;
+  const GetRouters(this._repository);
 
-  GetRouters(this._repository);
-
-  Future<Either<Failure, List<MikroTikRouter>>> call() => _repository.getRouters();
+  Future<Either<Failure, List<MikroTikRouter>>> call() => _repository.getAll();
 }

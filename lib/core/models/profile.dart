@@ -89,7 +89,6 @@ class HotspotProfile extends Equatable {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'router_id': routerId,
       'mikrotik_id': mikrotikId,
       'mikrotik_name': mikrotikName,

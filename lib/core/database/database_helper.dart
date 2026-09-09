@@ -11,7 +11,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _dbName = 'aminci.db';
-  static const _dbVersion = 6;
+  static const _dbVersion = 11;
 
   Database? _db;
 
@@ -52,9 +52,7 @@ class DatabaseHelper {
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
-      await db.execute(
-        "ALTER TABLE routers ADD COLUMN ros_version TEXT NOT NULL DEFAULT 'v7'",
-      );
+      await db.execute("ALTER TABLE routers ADD COLUMN ros_version TEXT NOT NULL DEFAULT 'v7'");
     }
     if (oldVersion < 3) {
       await db.execute("ALTER TABLE profiles ADD COLUMN mikrotik_id TEXT");
@@ -80,6 +78,42 @@ class DatabaseHelper {
     if (oldVersion < 6) {
       await db.execute("ALTER TABLE profiles ADD COLUMN expires_at INTEGER");
     }
+    if (oldVersion < 7) {
+      await db.execute("ALTER TABLE active_session ADD COLUMN expires_at INTEGER NOT NULL DEFAULT 0");
+    }
+    if (oldVersion < 8) {
+      await db.execute("ALTER TABLE users ADD COLUMN name TEXT NOT NULL DEFAULT ''");
+    }
+    if (oldVersion < 9) {
+      await db.execute('''
+        CREATE TABLE app_state (
+          id                 INTEGER PRIMARY KEY CHECK(id = 1),
+          first_launch_done  INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+      await db.insert('app_state', {'id': 1, 'first_launch_done': 0});
+    }
+    if (oldVersion < 10) {
+      await db.execute('''
+        CREATE TABLE preferences (
+          id           INTEGER PRIMARY KEY CHECK(id = 1),
+          theme_mode   TEXT    NOT NULL DEFAULT 'system',
+          language     TEXT    NOT NULL DEFAULT 'fr',
+          currency     TEXT    NOT NULL DEFAULT 'FCFA',
+          date_format  TEXT    NOT NULL DEFAULT 'dd/MM/yyyy'
+        )
+      ''');
+      await db.insert('preferences', {
+        'id': 1,
+        'theme_mode': 'system',
+        'language': 'fr',
+        'currency': 'FCFA',
+        'date_format': 'dd/MM/yyyy',
+      });
+    }
+    if (oldVersion < 11) {
+      await db.execute('ALTER TABLE users RENAME COLUMN password_hash TO password');
+    }
   }
 
   Future<void> _onConfigure(Database db) async {
@@ -97,8 +131,9 @@ class DatabaseHelper {
     batch.execute('''
       CREATE TABLE users (
         id            INTEGER PRIMARY KEY AUTOINCREMENT,
+        name          TEXT    NOT NULL DEFAULT '',
         username      TEXT    NOT NULL UNIQUE,
-        password_hash TEXT    NOT NULL,
+        password      TEXT    NOT NULL,
         role          TEXT    NOT NULL CHECK(role IN ('admin', 'operator')),
         created_at    INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
       )
@@ -109,7 +144,8 @@ class DatabaseHelper {
       CREATE TABLE active_session (
         id         INTEGER PRIMARY KEY CHECK(id = 1),
         user_id    INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-        created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
+        created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now')),
+        expires_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') + 86400)
       )
     ''');
 
@@ -172,6 +208,33 @@ class DatabaseHelper {
         disabled          INTEGER NOT NULL DEFAULT 0
       )
     ''');
+
+    // -- État applicatif (au plus 1 ligne) — détecte le premier lancement ----
+    batch.execute('''
+      CREATE TABLE app_state (
+        id                 INTEGER PRIMARY KEY CHECK(id = 1),
+        first_launch_done  INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+    batch.insert('app_state', {'id': 1, 'first_launch_done': 0});
+
+    // -- Préférences UI globales (au plus 1 ligne) ---------------------------
+    batch.execute('''
+      CREATE TABLE preferences (
+        id           INTEGER PRIMARY KEY CHECK(id = 1),
+        theme_mode   TEXT    NOT NULL DEFAULT 'system',
+        language     TEXT    NOT NULL DEFAULT 'fr',
+        currency     TEXT    NOT NULL DEFAULT 'FCFA',
+        date_format  TEXT    NOT NULL DEFAULT 'dd/MM/yyyy'
+      )
+    ''');
+    batch.insert('preferences', {
+      'id': 1,
+      'theme_mode': 'system',
+      'language': 'fr',
+      'currency': 'FCFA',
+      'date_format': 'dd/MM/yyyy',
+    });
 
     await batch.commit(noResult: true);
   }

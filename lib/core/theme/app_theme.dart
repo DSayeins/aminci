@@ -25,6 +25,16 @@ abstract final class AppTheme {
       titleTextStyle: AppTypography.topbarTitle,
     ),
 
+    // Icônes
+    iconTheme: const IconThemeData(color: AppColors.textSecondary, size: AppSpacing.iconMd),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        foregroundColor: AppColors.textSecondary,
+        highlightColor: AppColors.bgSubtle,
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
+      ),
+    ),
+
     // Cards
     cardTheme: CardThemeData(
       color: AppColors.bgSurface,
@@ -102,6 +112,11 @@ abstract final class AppTheme {
         borderRadius: AppSpacing.borderSm,
         borderSide: const BorderSide(color: AppColors.error, width: AppSpacing.borderDefault),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.borderSm,
+        borderSide: const BorderSide(color: AppColors.error, width: AppSpacing.borderThick),
+      ),
+      errorStyle: AppTypography.bodySm.copyWith(color: AppColors.textError),
     ),
 
     // Checkbox
@@ -114,17 +129,47 @@ abstract final class AppTheme {
       shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderXs),
     ),
 
+    // Progress indicator
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: AppColors.primary,
+      linearTrackColor: AppColors.bgSubtle,
+    ),
+
+    // Scrollbar (Windows desktop)
+    scrollbarTheme: ScrollbarThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.hovered)) return AppColors.borderStrong;
+        return AppColors.borderDefault;
+      }),
+      thickness: WidgetStateProperty.all(AppSpacing.borderThick),
+      radius: const Radius.circular(AppSpacing.radiusFull),
+      thumbVisibility: WidgetStateProperty.all(false),
+      trackVisibility: WidgetStateProperty.all(false),
+    ),
+
+    // DataTable (tableaux de vouchers, profils, routeurs)
+    dataTableTheme: DataTableThemeData(
+      headingRowColor: WidgetStateProperty.all(AppColors.bgSubtle),
+      headingTextStyle: AppTypography.tableHeader.copyWith(color: AppColors.textSecondary),
+      dataTextStyle: AppTypography.tableCell.copyWith(color: AppColors.textPrimary),
+      dataRowMinHeight: AppSpacing.buttonHeightLg,
+      dataRowMaxHeight: AppSpacing.buttonHeightLg + AppSpacing.x2,
+      dividerThickness: AppSpacing.borderThin,
+      columnSpacing: AppSpacing.x4,
+      horizontalMargin: AppSpacing.x4,
+    ),
+
     // Tooltip
     tooltipTheme: TooltipThemeData(
-      decoration: BoxDecoration(color: AppColors.gray900, borderRadius: AppSpacing.borderXs),
-      textStyle: AppTypography.bodySm.copyWith(color: AppColors.white),
+      decoration: BoxDecoration(color: AppColors.textPrimary, borderRadius: AppSpacing.borderXs),
+      textStyle: AppTypography.bodySm.copyWith(color: AppColors.textOnPrimary),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.paddingSm, vertical: AppSpacing.gapSm),
     ),
 
     // SnackBar
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: AppColors.gray900,
-      contentTextStyle: AppTypography.bodySm.copyWith(color: AppColors.white),
+      backgroundColor: AppColors.textPrimary,
+      contentTextStyle: AppTypography.bodySm.copyWith(color: AppColors.textOnPrimary),
       shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
       behavior: SnackBarBehavior.floating,
     ),
@@ -151,7 +196,7 @@ abstract final class AppTheme {
 
     // PopupMenu
     popupMenuTheme: PopupMenuThemeData(
-      color: AppColors.bgSurface,
+      color: AppColors.bgElevated,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: AppSpacing.borderMd,
@@ -171,9 +216,9 @@ abstract final class AppTheme {
     primaryContainer: AppColors.primaryLight,
     onPrimaryContainer: AppColors.primaryDark,
     secondary: AppColors.gray400,
-    onSecondary: AppColors.white,
+    onSecondary: AppColors.textOnPrimary,
     error: AppColors.error,
-    onError: AppColors.white,
+    onError: AppColors.textOnPrimary,
     surface: AppColors.bgSurface,
     onSurface: AppColors.textPrimary,
     outline: AppColors.borderDefault,
@@ -202,6 +247,15 @@ abstract final class AppThemeDark {
       elevation: 0,
       scrolledUnderElevation: 0,
       titleTextStyle: AppTypography.topbarTitle.copyWith(color: AppColorsDark.textPrimary),
+    ),
+
+    iconTheme: IconThemeData(color: AppColorsDark.textSecondary, size: AppSpacing.iconMd),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        foregroundColor: AppColorsDark.textSecondary,
+        highlightColor: AppColorsDark.bgSubtle,
+        shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
+      ),
     ),
 
     cardTheme: CardThemeData(
@@ -275,6 +329,11 @@ abstract final class AppThemeDark {
         borderRadius: AppSpacing.borderSm,
         borderSide: BorderSide(color: AppColorsDark.error, width: AppSpacing.borderDefault),
       ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppSpacing.borderSm,
+        borderSide: BorderSide(color: AppColorsDark.error, width: AppSpacing.borderThick),
+      ),
+      errorStyle: AppTypography.bodySm.copyWith(color: AppColorsDark.textError),
     ),
 
     checkboxTheme: CheckboxThemeData(
@@ -284,6 +343,33 @@ abstract final class AppThemeDark {
       }),
       side: BorderSide(color: AppColorsDark.borderDefault, width: AppSpacing.borderDefault),
       shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderXs),
+    ),
+
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      color: AppColorsDark.primary,
+      linearTrackColor: AppColorsDark.bgSubtle,
+    ),
+
+    scrollbarTheme: ScrollbarThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.hovered)) return AppColorsDark.borderStrong;
+        return AppColorsDark.borderDefault;
+      }),
+      thickness: WidgetStateProperty.all(AppSpacing.borderThick),
+      radius: const Radius.circular(AppSpacing.radiusFull),
+      thumbVisibility: WidgetStateProperty.all(false),
+      trackVisibility: WidgetStateProperty.all(false),
+    ),
+
+    dataTableTheme: DataTableThemeData(
+      headingRowColor: WidgetStateProperty.all(AppColorsDark.bgSubtle),
+      headingTextStyle: AppTypography.tableHeader.copyWith(color: AppColorsDark.textSecondary),
+      dataTextStyle: AppTypography.tableCell.copyWith(color: AppColorsDark.textPrimary),
+      dataRowMinHeight: AppSpacing.buttonHeightLg,
+      dataRowMaxHeight: AppSpacing.buttonHeightLg + AppSpacing.x2,
+      dividerThickness: AppSpacing.borderThin,
+      columnSpacing: AppSpacing.x4,
+      horizontalMargin: AppSpacing.x4,
     ),
 
     tooltipTheme: TooltipThemeData(

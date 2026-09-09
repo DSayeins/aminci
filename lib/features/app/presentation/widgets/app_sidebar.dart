@@ -1,40 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 
-import 'package:aminci/core/navigation/routes.dart';
+import 'package:aminci/core/router/routes.dart';
 import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/theme/app_typography.dart';
 import 'package:aminci/features/app/presentation/bloc/app_bloc.dart';
 import 'package:aminci/features/auth/domain/entities/user.dart';
+import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 
-/// Barre de navigation latérale — logo, items filtrés par rôle, footer utilisateur.
 class AppSidebar extends StatelessWidget {
-  const AppSidebar({super.key});
+  final List<Routes> availablePages;
+  final Routes? currentRoute;
+
+  const AppSidebar({super.key, required this.availablePages, required this.currentRoute});
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<AppBloc, AppState>(
-      builder: (context, state) {
-        if (state is! AppNavigating) return const SizedBox.shrink();
-
-        final isDark = Theme.of(context).brightness == Brightness.dark;
-        return Container(
-          width: AppSpacing.sidebarWidth,
-          color: isDark ? AppColorsDark.sidebarBg : AppColors.sidebarBg,
-          child: Column(
-            children: [
-              _SidebarLogo(),
-              const Divider(height: 1),
-              Expanded(
-                child: _SidebarNav(pages: state.availablePages, current: state.currentPage),
-              ),
-              const Divider(height: 1),
-              _SidebarFooter(),
-            ],
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: AppSpacing.sidebarWidth,
+      color: isDark ? AppColorsDark.sidebarBg : AppColors.sidebarBg,
+      child: Column(
+        children: [
+          _SidebarLogo(),
+          const Divider(height: 1),
+          Expanded(
+            child: _SidebarNav(pages: availablePages, current: currentRoute),
           ),
-        );
-      },
+          const Divider(height: 1),
+          _RouterSwitcher(),
+          const Divider(height: 1),
+          _LogoutButton(),
+          const Divider(height: 1),
+          _SidebarFooter(),
+        ],
+      ),
     );
   }
 }
@@ -76,7 +78,7 @@ class _SidebarLogo extends StatelessWidget {
 
 class _SidebarNav extends StatelessWidget {
   final List<Routes> pages;
-  final Routes current;
+  final Routes? current;
 
   const _SidebarNav({required this.pages, required this.current});
 
@@ -105,31 +107,165 @@ class _NavItem extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapXs),
-      child: InkWell(
-        onTap: () => context.read<AppBloc>().add(NavigateTo(page)),
+      child: Material(
+        color: isActive ? activeBg : Colors.transparent,
         borderRadius: AppSpacing.borderSm,
-        child: Container(
-          height: AppSpacing.navItemHeight,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH),
-          decoration: BoxDecoration(
-            color: isActive ? activeBg : Colors.transparent,
-            borderRadius: AppSpacing.borderSm,
-          ),
-          child: Row(
-            children: [
-              Icon(
-                page.icon,
-                size: AppSpacing.navIconSize,
-                color: isActive ? activeColor : inactiveIcon,
+        child: InkWell(
+          onTap: () => context.go(page.path),
+          mouseCursor: SystemMouseCursors.click,
+          hoverColor: AppColors.bgSubtle,
+          borderRadius: AppSpacing.borderSm,
+          child: SizedBox(
+            height: AppSpacing.navItemHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH),
+              child: Row(
+                children: [
+                  Icon(page.icon, size: AppSpacing.navIconSize, color: isActive ? activeColor : inactiveIcon),
+                  const SizedBox(width: AppSpacing.gapSm),
+                  Text(
+                    page.label,
+                    style: (isActive ? AppTypography.navItemActive : AppTypography.navItem).copyWith(
+                      color: isActive ? activeColor : inactiveText,
+                    ),
+                  ),
+                ],
               ),
-              SizedBox(width: AppSpacing.gapSm),
-              Text(
-                page.label,
-                style: (isActive ? AppTypography.navItemActive : AppTypography.navItem).copyWith(
-                  color: isActive ? activeColor : inactiveText,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Sélecteur de routeur
+// -----------------------------------------------------------------------------
+
+class _RouterSwitcher extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textSecondary = isDark ? AppColorsDark.textSecondary : AppColors.textSecondary;
+    final textTertiary = isDark ? AppColorsDark.textTertiary : AppColors.textTertiary;
+
+    return BlocBuilder<RoutersBloc, RoutersState>(
+      buildWhen: (prev, curr) {
+        final prevName = prev is RoutersLoaded ? prev.selectedRouter?.name : null;
+        final currName = curr is RoutersLoaded ? curr.selectedRouter?.name : null;
+        return prevName != currName;
+      },
+      builder: (context, state) {
+        final selected = state is RoutersLoaded ? state.selectedRouter : null;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
+          child: Material(
+            color: isDark ? AppColorsDark.bgSubtle : AppColors.bgSubtle,
+            borderRadius: AppSpacing.borderSm,
+            child: InkWell(
+              onTap: () => context.go('/routers'),
+              mouseCursor: SystemMouseCursors.click,
+              hoverColor: AppColors.primaryLight,
+              borderRadius: AppSpacing.borderSm,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH, vertical: AppSpacing.gapSm),
+                child: Row(
+                  children: [
+                    Icon(Icons.router_rounded, size: AppSpacing.navIconSize, color: textTertiary),
+                    const SizedBox(width: AppSpacing.gapSm),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            selected?.name ?? 'Aucun routeur',
+                            style: AppTypography.navItem.copyWith(color: textSecondary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            selected != null ? '${selected.ip}:${selected.port}' : 'Choisir un routeur',
+                            style: AppTypography.techData.copyWith(color: textTertiary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.swap_horiz_rounded, size: AppSpacing.iconSm, color: textTertiary),
+                  ],
                 ),
               ),
-            ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Bouton déconnexion
+// -----------------------------------------------------------------------------
+
+class _LogoutButton extends StatelessWidget {
+  Future<void> _confirm(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Se déconnecter ?', style: AppTypography.pageTitle.copyWith(color: AppColors.textPrimary)),
+        content: Text(
+          'Vous serez redirigé vers l\'écran de connexion.',
+          style: AppTypography.bodyMd.copyWith(color: AppColors.textSecondary),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text('Se déconnecter', style: AppTypography.bodyMd.copyWith(color: AppColors.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true && context.mounted) {
+      context.read<AppBloc>().add(const AppLogoutRequested());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapXs),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppSpacing.borderSm,
+        child: InkWell(
+          onTap: () => _confirm(context),
+          mouseCursor: SystemMouseCursors.click,
+          hoverColor: AppColors.bgSubtle,
+          borderRadius: AppSpacing.borderSm,
+          child: SizedBox(
+            height: AppSpacing.navItemHeight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.logout_rounded,
+                    size: AppSpacing.navIconSize,
+                    color: isDark ? AppColorsDark.textTertiary : AppColors.textTertiary,
+                  ),
+                  const SizedBox(width: AppSpacing.gapSm),
+                  Text(
+                    'Se déconnecter',
+                    style: AppTypography.navItem.copyWith(
+                      color: isDark ? AppColorsDark.textSecondary : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ),
@@ -160,7 +296,6 @@ class _SidebarFooter extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH),
             child: Row(
               children: [
-                // Avatar
                 Container(
                   width: AppSpacing.avatarSm,
                   height: AppSpacing.avatarSm,
@@ -173,7 +308,6 @@ class _SidebarFooter extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: AppSpacing.gapSm),
-                // Nom + rôle
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -184,19 +318,9 @@ class _SidebarFooter extends StatelessWidget {
                         style: AppTypography.userName.copyWith(color: textPrimary),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      Text(
-                        _roleLabel(user.role),
-                        style: AppTypography.userRole.copyWith(color: textTertiary),
-                      ),
+                      Text(_roleLabel(user.role), style: AppTypography.userRole.copyWith(color: textTertiary)),
                     ],
                   ),
-                ),
-                // Déconnexion
-                IconButton(
-                  icon: const Icon(Icons.logout_rounded, size: AppSpacing.iconMd),
-                  color: textTertiary,
-                  tooltip: 'Se déconnecter',
-                  onPressed: () => _confirmLogout(context),
                 ),
               ],
             ),
@@ -204,30 +328,6 @@ class _SidebarFooter extends StatelessWidget {
         );
       },
     );
-  }
-
-  Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text('Se déconnecter ?', style: AppTypography.pageTitle.copyWith(color: AppColors.textPrimary)),
-        content: Text(
-          'Vous serez redirigé vers l\'écran de connexion.',
-          style: AppTypography.bodyMd.copyWith(color: AppColors.textSecondary),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Annuler')),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text('Se déconnecter', style: TextStyle(color: AppColors.error)),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      context.read<AppBloc>().add(const AppLogoutRequested());
-    }
   }
 
   String _roleLabel(UserRole role) => role == UserRole.admin ? 'Administrateur' : 'Opérateur';

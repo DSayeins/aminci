@@ -52,18 +52,18 @@ abstract final class AppSpacing {
   static const double topbarHeight = 52;
 
   // Nav items
-  static const double navItemHeight = 34;
+  static const double navItemHeight = 32;
   static const double navItemPaddingH = x3; // 12px horizontal
   static const double navItemPaddingV = x2; //  8px vertical
-  static const double navIconSize = 16;
+  static const double navIconSize = iconMd;
   static const double navSectionLabelPadV = x2; //  8px
 
   // Boutons
-  static const double buttonHeightSm = 30;
+  static const double buttonHeightSm = 32;
   static const double buttonHeightMd = 36;
-  static const double buttonHeightLg = 42;
+  static const double buttonHeightLg = 44;
   static const double buttonPaddingH = x4; // 16px
-  static const double buttonIconSize = 14;
+  static const double buttonIconSize = iconSm;
   static const double buttonIconGap = x2; //  8px
 
   // Inputs
@@ -73,7 +73,7 @@ abstract final class AppSpacing {
 
   // Cards / surfaces
   static const double cardPaddingH = x4; // 16px
-  static const double cardPaddingV = x4; // 16px (ajuster à x3 pour dense)
+  static const double cardPaddingV = x4; // 16px
   static const double cardPaddingDense = x3; // 12px — mode dense (ex: stats)
 
   // Tableau
@@ -94,7 +94,7 @@ abstract final class AppSpacing {
   static const double logoIconSize = 28;
 
   // Router pill
-  static const double routerPillDotSize = 7;
+  static const double routerPillDotSize = 8;
   static const double routerPillHeight = 32;
 
   // -------------------------------------------------------------------------

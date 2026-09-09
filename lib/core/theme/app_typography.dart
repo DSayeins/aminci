@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Typographie Aminci
-/// Polices : Inter (UI) + JetBrains Mono (codes techniques)
+/// Polices : Sora (UI) + JetBrains Mono (codes techniques)
 ///
 /// Déclaration dans pubspec.yaml :
 /// ```yaml
@@ -23,7 +23,7 @@ import 'package:flutter/material.dart';
 /// ```
 ///
 /// Téléchargement :
-///   Inter        → https://fonts.google.com/specimen/Inter
+///   Sora         → https://fonts.google.com/specimen/Sora
 ///   JetBrains Mono → https://www.jetbrains.com/lp/mono/
 
 abstract final class AppTypography {

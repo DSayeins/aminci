@@ -99,6 +99,7 @@ abstract final class AppColors {
   static const Color bgPage = gray50; // canvas de l'app
   static const Color bgSurface = white; // cards, sidebar, topbar
   static const Color bgSubtle = gray100; // thead, hover rows
+  static const Color bgElevated = white; // menus, popovers (symétrie avec AppColorsDark)
   static const Color bgCode = gray50; // fond des codes mono
 
   // Borders

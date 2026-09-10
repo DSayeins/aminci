@@ -139,13 +139,18 @@ class _Body extends StatelessWidget {
           );
         }
 
-        return ListView.separated(
+        return GridView.builder(
           padding: AppSpacing.insetPage,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 300,
+            mainAxisSpacing: AppSpacing.gapMd,
+            crossAxisSpacing: AppSpacing.gapMd,
+            childAspectRatio: 1.15,
+          ),
           itemCount: loaded.hotspots.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapMd),
           itemBuilder: (context, index) {
             final hotspot = loaded.hotspots[index];
-            return _HotspotTile(hotspot: hotspot, isSelected: loaded.selected?.mikrotikId == hotspot.mikrotikId);
+            return _HotspotCard(hotspot: hotspot, isSelected: loaded.selected?.mikrotikId == hotspot.mikrotikId);
           },
         );
       },
@@ -154,14 +159,14 @@ class _Body extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// Tuile hotspot
+// Carte hotspot
 // -----------------------------------------------------------------------------
 
-class _HotspotTile extends StatelessWidget {
+class _HotspotCard extends StatelessWidget {
   final Hotspot hotspot;
   final bool isSelected;
 
-  const _HotspotTile({required this.hotspot, required this.isSelected});
+  const _HotspotCard({required this.hotspot, required this.isSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -175,61 +180,63 @@ class _HotspotTile extends StatelessWidget {
           width: isSelected ? AppSpacing.borderDefault : AppSpacing.borderThin,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: AppSpacing.x10,
-            height: AppSpacing.x10,
-            decoration: BoxDecoration(
-              color: isSelected ? AppColors.primaryLight : AppColors.bgSubtle,
-              borderRadius: AppSpacing.borderMd,
-            ),
-            child: Icon(
-              Icons.wifi_tethering_rounded,
-              color: isSelected ? AppColors.primary : AppColors.textTertiary,
-              size: AppSpacing.iconLg,
-            ),
-          ),
-          const SizedBox(width: AppSpacing.gapLg),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(hotspot.name, style: AppTypography.sectionTitle.copyWith(color: AppColors.textPrimary)),
-                const SizedBox(height: AppSpacing.gapXs),
-                Text(
-                  '${hotspot.interface}${hotspot.addressPool != null ? '  •  ${hotspot.addressPool}' : ''}',
-                  style: AppTypography.techData.copyWith(color: AppColors.textSecondary),
+          Row(
+            children: [
+              Container(
+                width: AppSpacing.x10,
+                height: AppSpacing.x10,
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primaryLight : AppColors.bgSubtle,
+                  borderRadius: AppSpacing.borderMd,
                 ),
-              ],
-            ),
+                child: Icon(
+                  Icons.wifi_tethering_rounded,
+                  color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                  size: AppSpacing.iconLg,
+                ),
+              ),
+              const Spacer(),
+              if (hotspot.disabled)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
+                  decoration: BoxDecoration(color: AppColors.statusExpiredBg, borderRadius: AppSpacing.borderFull),
+                  child: Text('Désactivé', style: AppTypography.badge.copyWith(color: AppColors.statusExpired)),
+                )
+              else if (isSelected)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
+                  decoration: BoxDecoration(color: AppColors.statusActiveBg, borderRadius: AppSpacing.borderFull),
+                  child: Text('Actif', style: AppTypography.badge.copyWith(color: AppColors.statusActive)),
+                ),
+            ],
           ),
-          if (hotspot.disabled)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.gapSm),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
-                decoration: BoxDecoration(color: AppColors.statusExpiredBg, borderRadius: AppSpacing.borderFull),
-                child: Text('Désactivé', style: AppTypography.badge.copyWith(color: AppColors.statusExpired)),
-              ),
-            )
-          else if (isSelected)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.gapSm),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
-                decoration: BoxDecoration(color: AppColors.statusActiveBg, borderRadius: AppSpacing.borderFull),
-                child: Text('Actif', style: AppTypography.badge.copyWith(color: AppColors.statusActive)),
-              ),
+          const SizedBox(height: AppSpacing.gapLg),
+          Text(
+            hotspot.name,
+            style: AppTypography.sectionTitle.copyWith(color: AppColors.textPrimary),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: AppSpacing.gapXs),
+          Text(
+            '${hotspot.interface}${hotspot.addressPool != null ? '  •  ${hotspot.addressPool}' : ''}',
+            style: AppTypography.techData.copyWith(color: AppColors.textSecondary),
+            overflow: TextOverflow.ellipsis,
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: hotspot.disabled
+                  ? null
+                  : () {
+                      context.read<HotspotBloc>().add(HotspotSelected(hotspot));
+                      context.go('/dashboard');
+                    },
+              child: const Text('Utiliser'),
             ),
-          ElevatedButton(
-            onPressed: hotspot.disabled
-                ? null
-                : () {
-                    context.read<HotspotBloc>().add(HotspotSelected(hotspot));
-                    context.go('/dashboard');
-                  },
-            child: const Text('Utiliser'),
           ),
         ],
       ),

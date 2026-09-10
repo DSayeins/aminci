@@ -126,11 +126,16 @@ class _Body extends StatelessWidget {
           );
         }
 
-        return ListView.separated(
+        return GridView.builder(
           padding: AppSpacing.insetPage,
+          gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+            maxCrossAxisExtent: 300,
+            mainAxisSpacing: AppSpacing.gapMd,
+            crossAxisSpacing: AppSpacing.gapMd,
+            childAspectRatio: 1.15,
+          ),
           itemCount: routers.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapMd),
-          itemBuilder: (context, index) => _RouterTile(router: routers[index]),
+          itemBuilder: (context, index) => _RouterCard(router: routers[index]),
         );
       },
     );
@@ -138,13 +143,13 @@ class _Body extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// Tuile routeur
+// Carte routeur
 // -----------------------------------------------------------------------------
 
-class _RouterTile extends StatelessWidget {
+class _RouterCard extends StatelessWidget {
   final MikroTikRouter router;
 
-  const _RouterTile({required this.router});
+  const _RouterCard({required this.router});
 
   Future<void> _confirmDelete(BuildContext context, MikroTikRouter router) async {
     final confirmed = await showDialog<bool>(
@@ -189,56 +194,64 @@ class _RouterTile extends StatelessWidget {
               width: isSelected ? AppSpacing.borderDefault : AppSpacing.borderThin,
             ),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: AppSpacing.x10,
-                height: AppSpacing.x10,
-                decoration: BoxDecoration(
-                  color: isSelected ? AppColors.primaryLight : AppColors.bgSubtle,
-                  borderRadius: AppSpacing.borderMd,
-                ),
-                child: Icon(
-                  Icons.router_rounded,
-                  color: isSelected ? AppColors.primary : AppColors.textTertiary,
-                  size: AppSpacing.iconLg,
-                ),
-              ),
-              const SizedBox(width: AppSpacing.gapLg),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(router.name, style: AppTypography.sectionTitle.copyWith(color: AppColors.textPrimary)),
-                    const SizedBox(height: AppSpacing.gapXs),
-                    Text(
-                      '${router.ip}:${router.port}  •  ${router.rosVersion.name.toUpperCase()}',
-                      style: AppTypography.techData.copyWith(color: AppColors.textSecondary),
+              Row(
+                children: [
+                  Container(
+                    width: AppSpacing.x10,
+                    height: AppSpacing.x10,
+                    decoration: BoxDecoration(
+                      color: isSelected ? AppColors.primaryLight : AppColors.bgSubtle,
+                      borderRadius: AppSpacing.borderMd,
                     ),
-                  ],
-                ),
-              ),
-              if (isSelected)
-                Padding(
-                  padding: const EdgeInsets.only(right: AppSpacing.gapSm),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
-                    decoration: BoxDecoration(color: AppColors.statusActiveBg, borderRadius: AppSpacing.borderFull),
-                    child: Text('Actif', style: AppTypography.badge.copyWith(color: AppColors.statusActive)),
+                    child: Icon(
+                      Icons.router_rounded,
+                      color: isSelected ? AppColors.primary : AppColors.textTertiary,
+                      size: AppSpacing.iconLg,
+                    ),
                   ),
-                ),
-              ElevatedButton(
-                onPressed: () {
-                  context.read<RoutersBloc>().add(RouterSelected(router));
-                  context.go('/hotspots');
-                },
-                child: const Text('Utiliser'),
+                  const Spacer(),
+                  if (isSelected)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
+                      decoration: BoxDecoration(color: AppColors.statusActiveBg, borderRadius: AppSpacing.borderFull),
+                      child: Text('Actif', style: AppTypography.badge.copyWith(color: AppColors.statusActive)),
+                    ),
+                ],
               ),
-              const SizedBox(width: AppSpacing.gapSm),
-              IconButton(
-                icon: const Icon(Icons.delete_outline_rounded),
-                onPressed: () => _confirmDelete(context, router),
-                tooltip: 'Supprimer',
+              const SizedBox(height: AppSpacing.gapLg),
+              Text(
+                router.name,
+                style: AppTypography.sectionTitle.copyWith(color: AppColors.textPrimary),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: AppSpacing.gapXs),
+              Text(
+                '${router.ip}:${router.port}  •  ${router.rosVersion.name.toUpperCase()}',
+                style: AppTypography.techData.copyWith(color: AppColors.textSecondary),
+                overflow: TextOverflow.ellipsis,
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        context.read<RoutersBloc>().add(RouterSelected(router));
+                        context.go('/hotspots');
+                      },
+                      child: const Text('Utiliser'),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.gapSm),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    onPressed: () => _confirmDelete(context, router),
+                    tooltip: 'Supprimer',
+                  ),
+                ],
               ),
             ],
           ),

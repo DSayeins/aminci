@@ -11,7 +11,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _dbName = 'aminci.db';
-  static const _dbVersion = 11;
+  static const _dbVersion = 12;
 
   Database? _db;
 
@@ -114,6 +114,20 @@ class DatabaseHelper {
     if (oldVersion < 11) {
       await db.execute('ALTER TABLE users RENAME COLUMN password_hash TO password');
     }
+    if (oldVersion < 12) {
+      await db.execute('''
+        CREATE TABLE hotspots (
+          id           INTEGER PRIMARY KEY AUTOINCREMENT,
+          router_id    INTEGER NOT NULL REFERENCES routers(id) ON DELETE CASCADE,
+          mikrotik_id  TEXT    NOT NULL,
+          name         TEXT    NOT NULL,
+          interface    TEXT    NOT NULL,
+          address_pool TEXT,
+          profile      TEXT,
+          disabled     INTEGER NOT NULL DEFAULT 0
+        )
+      ''');
+    }
   }
 
   Future<void> _onConfigure(Database db) async {
@@ -206,6 +220,20 @@ class DatabaseHelper {
         bytes_in          INTEGER NOT NULL DEFAULT 0,
         bytes_out         INTEGER NOT NULL DEFAULT 0,
         disabled          INTEGER NOT NULL DEFAULT 0
+      )
+    ''');
+
+    // -- Hotspots MikroTik (cache local, un routeur peut en avoir plusieurs) --
+    batch.execute('''
+      CREATE TABLE hotspots (
+        id           INTEGER PRIMARY KEY AUTOINCREMENT,
+        router_id    INTEGER NOT NULL REFERENCES routers(id) ON DELETE CASCADE,
+        mikrotik_id  TEXT    NOT NULL,
+        name         TEXT    NOT NULL,
+        interface    TEXT    NOT NULL,
+        address_pool TEXT,
+        profile      TEXT,
+        disabled     INTEGER NOT NULL DEFAULT 0
       )
     ''');
 

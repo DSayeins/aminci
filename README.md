@@ -8,15 +8,18 @@ Application desktop Windows de gestion et génération de tickets d'accès Mikro
 
 ## Aperçu
 
-Aminci permet à des administrateurs et opérateurs réseau de :
+Aminci vise à permettre à des administrateurs et opérateurs réseau de :
 
-- Générer des vouchers hotspot MikroTik et les imprimer en PDF
-- Gérer plusieurs routeurs sur des sites différents (multi-site)
+- Gérer plusieurs routeurs MikroTik sur des sites différents (multi-site)
+- Gérer plusieurs hotspots par routeur
+- Générer des vouchers hotspot et les imprimer en PDF
 - Synchroniser et configurer les profils d'accès (débit, durée, quota)
 - Surveiller les sessions hotspot actives en temps réel
-- Consulter l'historique de tous les tickets générés
+- Consulter l'historique des tickets générés
 
-L'application fonctionne **entièrement en réseau local** — aucune connexion Internet n'est requise. Elle communique directement avec les routeurs MikroTik via le protocole **RouterOS API (TCP port 8728)**.
+L'application fonctionne **entièrement en réseau local** — aucune connexion Internet n'est requise. Elle communique avec les routeurs MikroTik via la **REST API de RouterOS v7+** (`http://{ip}:{port}/rest`).
+
+**État actuel** : authentification, gestion des routeurs et des hotspots sont fonctionnels. Profils, vouchers, sessions actives et historique sont encore à construire (voir [Roadmap](#roadmap)).
 
 ---
 
@@ -28,78 +31,84 @@ L'application fonctionne **entièrement en réseau local** — aucune connexion 
 | Langage | Dart |
 | State management | BLoC / Cubit |
 | Injection de dépendances | get_it |
-| Navigation | NavigationBloc + IndexedStack |
+| Navigation | go_router (déclaratif) |
 | Base de données locale | sqflite (via sqflite_common_ffi) |
-| Communication MikroTik | RouterOS API TCP via `dart:io` |
+| Communication MikroTik | REST API (RouterOS v7+) via Dio |
 | Export PDF | pdf + printing |
-| UI | Flutter Desktop — thème light / dark |
+| UI | Flutter Desktop — police Sora (UI) + JetBrains Mono (codes) |
 
 ---
 
 ## Architecture
 
-Aminci suit une architecture **Feature-first Clean Architecture** avec séparation stricte des couches.
+Aminci suit une architecture **Feature-first Clean Architecture**.
 
 ```
 lib/
 ├── core/
-│   ├── database/        ← DatabaseHelper (sqflite_common_ffi)
-│   ├── di/              ← Service locator (get_it)
-│   ├── error/           ← Failures, Exceptions, Either
-│   ├── mikrotik/        ← Client RouterOS API (TCP)
-│   ├── models/          ← Modèles partagés (User, Router, Profile, Voucher)
-│   ├── navigation/      ← Routes enum, NavigationBloc
-│   └── theme/           ← AppColors, AppSpacing, AppTypography, ThemeCubit
+│   ├── database/     ← DatabaseHelper (sqflite_common_ffi), migrations
+│   ├── di/           ← Service locator (get_it), un module par feature
+│   ├── enum/         ← UserRole, RouterOsVersion
+│   ├── error/        ← Failures, Exceptions, Either, ErrorMapper
+│   ├── mikrotik/     ← Client REST RouterOS (MikroTikRestClient)
+│   ├── models/       ← Modèles partagés (User, MikroTikRouter, Hotspot,
+│   │                    HotspotProfile, Voucher, Preference, AppState)
+│   ├── router/       ← go_router (app_router.dart), enum Routes
+│   ├── theme/        ← AppColors, AppSpacing, AppTypography, AppTheme
+│   └── utils/        ← PasswordHasher, CurrencyFormatter
 │
 ├── features/
-│   ├── app/             ← AppShell, AppBloc, AppSidebar, AppTopBar
-│   ├── auth/            ← Login local, gestion des rôles
-│   ├── launch/          ← Écran de démarrage, vérification de session
-│   ├── setup/           ← Création du premier compte administrateur
-│   ├── routers/         ← CRUD routeurs + test de connexion
-│   ├── profiles/        ← Synchronisation des profils MikroTik
-│   ├── vouchers/        ← Génération, impression et suppression de vouchers
-│   ├── sessions/        ← Sessions hotspot actives (temps réel)
-│   └── export/          ← Impression PDF / export fichier
+│   ├── launch/    ← Écran de démarrage, détection premier lancement / session active
+│   ├── setup/     ← Wizard 3 étapes : compte admin, premier routeur, préférences
+│   ├── login/     ← Authentification locale
+│   ├── logout/    ← Déconnexion (ferme la session active)
+│   ├── routers/   ← CRUD routeurs MikroTik + test de connexion
+│   ├── hotspot/   ← Liste des hotspots d'un routeur (un routeur peut en avoir plusieurs)
+│   └── app/       ← Shell de l'app connectée (sidebar, topbar) — presentation seule
 │
 └── shared/
-    └── widgets/         ← EmptyState, AppSnackbar, BrandingPanel
+    └── widgets/   ← EmptyState, ErrorView, AppSnackbar, SplashView, BrandingPanel, AppTextField
 ```
 
-Chaque feature suit le même découpage interne :
+Chaque feature suit le même découpage interne (sauf `app/`, presentation-only par choix — voir `CLAUDE.md`) :
 
 ```
 feature/
-├── data/           ← Repository impl, sources de données (sqflite, MikroTik)
-├── domain/         ← Repository abstract, use cases (sans dépendances Flutter)
+├── data/           ← Repository impl, datasources (sqflite, MikroTik)
+├── domain/         ← Repository abstract, use cases (sans dépendance Flutter)
 └── presentation/   ← BLoC, écrans, widgets
 ```
+
+Détails à jour dans [`CLAUDE.md`](CLAUDE.md) (flux de démarrage, conventions DI, migrations DB, gestion d'erreurs).
 
 ---
 
 ## Fonctionnalités
 
+### Authentification & premier lancement
+- Wizard de setup en 3 étapes au premier lancement : compte administrateur, premier routeur, préférences (devise, format de date, thème)
+- Connexion locale (sqflite), hash SHA-256 + salt
+- Session persistée entre redémarrages — restaurée automatiquement sans repasser par l'écran de connexion
+
 ### Routeurs
-- Ajout, modification et suppression de routeurs MikroTik
-- Test de connexion RouterOS API en un clic
-- Stockage des credentials en local (sqflite)
+- Ajout, sélection et suppression de routeurs MikroTik
+- Validation de connexion via `GET /system/identity`
+- Support RouterOS v7+ (REST, port 80)
 
-### Profils
-- Synchronisation des profils hotspot depuis le routeur MikroTik
-- Affichage du débit (`rate-limit`), de la durée (`session-timeout`) et des connexions simultanées
-- Configuration du prix de vente par profil
+### Hotspots
+- Liste des serveurs hotspot d'un routeur (`/ip/hotspot/print`) — un routeur peut en avoir plusieurs
+- Mise en cache locale, resynchronisée à chaque chargement
+- Sélection du hotspot actif avant d'accéder au reste de l'app
 
-### Vouchers
-- Génération de 1 à 50 vouchers par lot
-- Codes au format `AM-XXXXX` (alphabet sans caractères ambigus)
-- Impression automatique en PDF après génération — 3 tickets par ligne sur A4
-- Chaque ticket contient : code, mot de passe, profil, débit, durée, site, prix, date
-- Suppression locale et sur le routeur MikroTik
+---
 
-### Authentification
-- Authentification locale (sqflite) avec hash SHA-256 + salt
-- Deux rôles : **Administrateur** (accès complet) et **Opérateur** (vouchers uniquement)
-- Session persistée entre les redémarrages
+## Roadmap
+
+Pas encore implémenté (routes présentes mais vides — `Placeholder()`) :
+
+- **Profils** — synchronisation des profils hotspot MikroTik (débit, durée, quota, prix)
+- **Vouchers** — génération par lot, impression PDF, historique
+- **Sessions actives** — surveillance en temps réel, déconnexion manuelle
 
 ---
 
@@ -108,12 +117,12 @@ feature/
 - Windows 10 / 11 (64 bits)
 - Flutter SDK ≥ 3.11
 - Dart SDK ≥ 3.11
-- Un ou plusieurs routeurs MikroTik avec l'API activée (port 8728)
+- Un ou plusieurs routeurs MikroTik RouterOS v7+ avec l'API REST activée
 
-### Activer l'API RouterOS sur MikroTik
+### Activer l'API REST sur MikroTik (RouterOS v7+)
 
 ```
-/ip service set api disabled=no port=8728
+/ip service set www disabled=no port=80
 ```
 
 ---
@@ -137,17 +146,15 @@ flutter build windows --release
 
 L'exécutable est généré dans `build/windows/x64/runner/Release/`.
 
+Voir [`CONTRIBUTING.md`](CONTRIBUTING.md) pour les conventions de contribution.
+
 ---
 
 ## Base de données
 
 La base SQLite est stockée dans `%APPDATA%\Aminci\aminci.db`.
 
-Pour réinitialiser l'application (ex: changer le schéma en développement) :
-
-```
-%APPDATA%\Aminci\aminci.db  ← supprimer ce fichier
-```
+Pour réinitialiser l'application en développement (ex: après un changement de schéma non migré proprement) : supprimer ce fichier.
 
 ---
 
@@ -159,9 +166,8 @@ Le thème Aminci est défini dans `lib/core/theme/` :
 |---|---|
 | `app_colors.dart` | Palette light + dark (primitives + sémantiques) |
 | `app_spacing.dart` | Grille 4px — espacements, dimensions, border radius |
-| `app_typography.dart` | Styles Inter (UI) + JetBrains Mono (codes, données techniques) |
-| `app_theme.dart` | ThemeData Flutter assemblé (light + dark) |
-| `theme_cubit.dart` | Toggle light / dark piloté par BLoC |
+| `app_typography.dart` | Styles Sora (UI) + JetBrains Mono (codes, données techniques) |
+| `app_theme.dart` | `ThemeData` Flutter assemblé (`AppTheme.light` / `AppThemeDark.dark`) |
 
 **Règle absolue** : ne jamais utiliser de valeurs hex, de `Colors.xxx` ou de `TextStyle` inline dans les widgets. Toujours passer par `AppColors`, `AppSpacing` et `AppTypography`.
 
@@ -172,11 +178,11 @@ Le thème Aminci est défini dans `lib/core/theme/` :
 - Réseau local (LAN) — aucun accès Internet requis
 - Déploiement sur PC de bureau ou laptop Windows
 - Opérateurs potentiellement peu techniques — l'UI privilégie la clarté et la rapidité
-- Tickets imprimés sur petits formats papier (format A4, 3 par ligne)
+- Tickets imprimés sur petits formats papier
 - Adapté aux contraintes terrain d'Afrique de l'Ouest (Niger)
 
 ---
 
 ## Licence
 
-Projet privé — tous droits réservés.
+Distribué sous licence MIT — voir [`LICENSE`](LICENSE).

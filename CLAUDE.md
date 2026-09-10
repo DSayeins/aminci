@@ -2,7 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-> Full architecture rules, design system constraints, and MikroTik API reference are in [`.claude/CLAUDE.md`](.claude/CLAUDE.md). Read it before making any changes.
+> See [`README.md`](README.md) for the project overview and current feature
+> status, and [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch/commit
+> conventions and the pre-PR checklist.
 
 ---
 

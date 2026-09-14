@@ -8,6 +8,7 @@ import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/features/app/app_sidebar.dart';
 import 'package:aminci/features/app/app_topbar.dart';
 import 'package:aminci/features/login/presentation/bloc/login_bloc.dart';
+import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 
 /// Coquille de l'application connectée (sidebar + topbar + contenu).
 ///
@@ -25,6 +26,17 @@ class AppShell extends StatelessWidget {
       // Aucune session en mémoire (ex. accès direct à /app sans passer par /login).
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) context.go('/login');
+      });
+      return const Scaffold(backgroundColor: AppColors.bgPage, body: SizedBox.shrink());
+    }
+
+    final routersState = context.watch<RoutersBloc>().state;
+    final selectedRouter = routersState is RoutersLoaded ? routersState.selectedRouter : null;
+    if (selectedRouter == null) {
+      // Aucun routeur choisi (ex. accès direct à /dashboard) — le shell a
+      // besoin d'un routeur actif pour tout le reste.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) context.go('/routers');
       });
       return const Scaffold(backgroundColor: AppColors.bgPage, body: SizedBox.shrink());
     }

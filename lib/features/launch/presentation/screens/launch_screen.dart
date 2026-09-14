@@ -29,7 +29,10 @@ class _LaunchScreenState extends State<LaunchScreen> {
           // Réhydrate LoginBloc — la session vient d'être restaurée depuis la
           // DB, pas d'un login fraîchement effectué dans cette session app.
           context.read<LoginBloc>().add(LoginSessionRestored(state.user));
-          context.go('/dashboard');
+          // Le routeur sélectionné n'est jamais persisté (RoutersBloc repart
+          // à zéro à chaque lancement) — il faut toujours repasser par le
+          // choix du routeur, même avec une session restaurée.
+          context.go('/routers');
         }
         if (state is LaunchUnauthenticated) context.go('/login');
       },

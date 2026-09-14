@@ -8,6 +8,7 @@ import 'package:aminci/core/theme/app_theme.dart';
 import 'package:aminci/features/hotspot/presentation/bloc/hotspot_bloc.dart';
 import 'package:aminci/features/launch/presentation/bloc/launch_bloc.dart';
 import 'package:aminci/features/logout/presentation/bloc/logout_bloc.dart';
+import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 import 'package:aminci/features/setup/presentation/bloc/setup_bloc.dart';
 import 'package:window_manager/window_manager.dart';
@@ -35,6 +36,7 @@ void main() async {
         BlocProvider<SetupBloc>(create: (_) => sl<SetupBloc>()),
         BlocProvider<RoutersBloc>(create: (_) => sl<RoutersBloc>()..add(const RoutersLoadRequested())),
         BlocProvider<HotspotBloc>(create: (_) => sl<HotspotBloc>()),
+        BlocProvider<ProfilesBloc>(create: (_) => sl<ProfilesBloc>()),
       ],
       child: const AminciApp(),
     ),

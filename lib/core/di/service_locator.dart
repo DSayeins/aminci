@@ -5,6 +5,7 @@ import 'package:aminci/core/di/modules/hotspot_module.dart';
 import 'package:aminci/core/di/modules/login_module.dart';
 import 'package:aminci/core/di/modules/logout_module.dart';
 import 'package:aminci/core/di/modules/launch_module.dart';
+import 'package:aminci/core/di/modules/profiles_module.dart';
 import 'package:aminci/core/di/modules/routers_module.dart';
 import 'package:aminci/core/di/modules/setup_module.dart';
 
@@ -22,4 +23,5 @@ Future<void> setupServiceLocator() async {
   registerSetupModule(sl);
   registerRoutersModule(sl);
   registerHotspotModule(sl);
+  registerProfilesModule(sl);
 }

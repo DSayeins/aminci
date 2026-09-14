@@ -145,7 +145,7 @@ class _Body extends StatelessWidget {
             maxCrossAxisExtent: 300,
             mainAxisSpacing: AppSpacing.gapMd,
             crossAxisSpacing: AppSpacing.gapMd,
-            childAspectRatio: 1.15,
+            childAspectRatio: 0.85,
           ),
           itemCount: loaded.hotspots.length,
           itemBuilder: (context, index) {
@@ -225,6 +225,32 @@ class _HotspotCard extends StatelessWidget {
             style: AppTypography.techData.copyWith(color: AppColors.textSecondary),
             overflow: TextOverflow.ellipsis,
           ),
+          if (hotspot.profile != null) ...[
+            const SizedBox(height: AppSpacing.gapXs),
+            Text(
+              'Profil : ${hotspot.profile}',
+              style: AppTypography.bodySm.copyWith(color: AppColors.textSecondary),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          if (hotspot.ipOfDnsName != null) ...[
+            const SizedBox(height: AppSpacing.gapXs),
+            Text(
+              'DNS : ${hotspot.ipOfDnsName}',
+              style: AppTypography.techData.copyWith(color: AppColors.textTertiary),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+          const SizedBox(height: AppSpacing.gapSm),
+          Wrap(
+            spacing: AppSpacing.gapXs,
+            runSpacing: AppSpacing.gapXs,
+            children: [
+              _InfoChip(label: hotspot.https ? 'HTTPS' : 'HTTP'),
+              if (hotspot.idleTimeout != null) _InfoChip(label: 'Inactivité ${hotspot.idleTimeout}'),
+              if (hotspot.proxyStatus != null) _InfoChip(label: hotspot.proxyStatus!),
+            ],
+          ),
           const Spacer(),
           SizedBox(
             width: double.infinity,
@@ -240,6 +266,25 @@ class _HotspotCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// -----------------------------------------------------------------------------
+// Petit badge d'info secondaire
+// -----------------------------------------------------------------------------
+
+class _InfoChip extends StatelessWidget {
+  final String label;
+
+  const _InfoChip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x2, vertical: AppSpacing.x1),
+      decoration: BoxDecoration(color: AppColors.bgSubtle, borderRadius: AppSpacing.borderSm),
+      child: Text(label, style: AppTypography.badge.copyWith(color: AppColors.textSecondary)),
     );
   }
 }

@@ -11,7 +11,7 @@ class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._();
 
   static const _dbName = 'aminci.db';
-  static const _dbVersion = 12;
+  static const _dbVersion = 14;
 
   Database? _db;
 
@@ -128,6 +128,22 @@ class DatabaseHelper {
         )
       ''');
     }
+    if (oldVersion < 13) {
+      await db.execute("ALTER TABLE hotspots ADD COLUMN https INTEGER NOT NULL DEFAULT 0");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN addresses_per_mac INTEGER");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN idle_timeout TEXT");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN invalid INTEGER NOT NULL DEFAULT 0");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN ip_of_dns_name TEXT");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN keepalive_timeout TEXT");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN login_timeout TEXT");
+      await db.execute("ALTER TABLE hotspots ADD COLUMN proxy_status TEXT");
+    }
+    if (oldVersion < 14) {
+      await db.execute("ALTER TABLE profiles ADD COLUMN address_list TEXT");
+      await db.execute("ALTER TABLE profiles ADD COLUMN is_default INTEGER NOT NULL DEFAULT 0");
+      await db.execute("ALTER TABLE profiles ADD COLUMN status_autorefresh TEXT");
+      await db.execute("ALTER TABLE profiles ADD COLUMN transparent_proxy INTEGER NOT NULL DEFAULT 0");
+    }
   }
 
   Future<void> _onConfigure(Database db) async {
@@ -192,6 +208,10 @@ class DatabaseHelper {
         add_mac_cookie      INTEGER NOT NULL DEFAULT 1,
         mac_cookie_timeout  TEXT,
         shared_users        INTEGER NOT NULL DEFAULT 1,
+        address_list        TEXT,
+        is_default          INTEGER NOT NULL DEFAULT 0,
+        status_autorefresh  TEXT,
+        transparent_proxy   INTEGER NOT NULL DEFAULT 0,
         price               REAL    NOT NULL DEFAULT 0,
         expires_at          INTEGER,
         synced_at           INTEGER NOT NULL DEFAULT (strftime('%s', 'now'))
@@ -226,14 +246,22 @@ class DatabaseHelper {
     // -- Hotspots MikroTik (cache local, un routeur peut en avoir plusieurs) --
     batch.execute('''
       CREATE TABLE hotspots (
-        id           INTEGER PRIMARY KEY AUTOINCREMENT,
-        router_id    INTEGER NOT NULL REFERENCES routers(id) ON DELETE CASCADE,
-        mikrotik_id  TEXT    NOT NULL,
-        name         TEXT    NOT NULL,
-        interface    TEXT    NOT NULL,
-        address_pool TEXT,
-        profile      TEXT,
-        disabled     INTEGER NOT NULL DEFAULT 0
+        id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+        router_id          INTEGER NOT NULL REFERENCES routers(id) ON DELETE CASCADE,
+        mikrotik_id        TEXT    NOT NULL,
+        name               TEXT    NOT NULL,
+        interface          TEXT    NOT NULL,
+        address_pool       TEXT,
+        profile            TEXT,
+        disabled           INTEGER NOT NULL DEFAULT 0,
+        https              INTEGER NOT NULL DEFAULT 0,
+        addresses_per_mac  INTEGER,
+        idle_timeout       TEXT,
+        invalid            INTEGER NOT NULL DEFAULT 0,
+        ip_of_dns_name     TEXT,
+        keepalive_timeout  TEXT,
+        login_timeout      TEXT,
+        proxy_status       TEXT
       )
     ''');
 

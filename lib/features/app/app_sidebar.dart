@@ -6,10 +6,13 @@ import 'package:aminci/core/router/routes.dart';
 import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/theme/app_typography.dart';
+import 'package:aminci/features/hotspot/presentation/bloc/hotspot_bloc.dart';
 import 'package:aminci/features/login/presentation/bloc/login_bloc.dart';
 import 'package:aminci/features/logout/presentation/bloc/logout_bloc.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 
+/// Hiérarchie : Identité (logo) → Navigation → Contexte (routeur/hotspot
+/// actifs) → Compte (utilisateur + déconnexion).
 class AppSidebar extends StatelessWidget {
   final List<Routes> availablePages;
   final Routes? currentRoute;
@@ -29,11 +32,9 @@ class AppSidebar extends StatelessWidget {
             child: _SidebarNav(pages: availablePages, current: currentRoute),
           ),
           const Divider(height: 1),
-          _RouterSwitcher(),
+          _ContextSwitcher(),
           const Divider(height: 1),
-          _LogoutButton(),
-          const Divider(height: 1),
-          _SidebarFooter(),
+          _AccountFooter(),
         ],
       ),
     );
@@ -135,74 +136,114 @@ class _NavItem extends StatelessWidget {
 }
 
 // -----------------------------------------------------------------------------
-// Sélecteur de routeur
+// Contexte de travail — routeur + hotspot actifs
 // -----------------------------------------------------------------------------
 
-class _RouterSwitcher extends StatelessWidget {
+class _ContextSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final textSecondary = AppColors.textSecondary;
-    final textTertiary = AppColors.textTertiary;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
+      child: Container(
+        decoration: BoxDecoration(color: AppColors.bgSubtle, borderRadius: AppSpacing.borderSm),
+        child: Column(
+          children: [
+            BlocBuilder<RoutersBloc, RoutersState>(
+              buildWhen: (prev, curr) {
+                final prevName = prev is RoutersLoaded ? prev.selectedRouter?.name : null;
+                final currName = curr is RoutersLoaded ? curr.selectedRouter?.name : null;
+                return prevName != currName;
+              },
+              builder: (context, state) {
+                final selected = state is RoutersLoaded ? state.selectedRouter : null;
+                return _ContextRow(
+                  icon: Icons.router_rounded,
+                  title: selected?.name ?? 'Aucun routeur',
+                  subtitle: selected != null ? '${selected.ip}:${selected.port}' : 'Choisir un routeur',
+                  onTap: () => context.go('/routers'),
+                );
+              },
+            ),
+            const Divider(height: 1, indent: AppSpacing.navItemPaddingH, endIndent: AppSpacing.navItemPaddingH),
+            BlocBuilder<HotspotBloc, HotspotState>(
+              buildWhen: (prev, curr) {
+                final prevName = prev is HotspotLoaded ? prev.selected?.name : null;
+                final currName = curr is HotspotLoaded ? curr.selected?.name : null;
+                return prevName != currName;
+              },
+              builder: (context, state) {
+                final selected = state is HotspotLoaded ? state.selected : null;
+                return _ContextRow(
+                  icon: Icons.wifi_tethering_rounded,
+                  title: selected?.name ?? 'Aucun hotspot',
+                  subtitle: selected?.interface ?? 'Choisir un hotspot',
+                  onTap: () => context.go('/hotspots'),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    return BlocBuilder<RoutersBloc, RoutersState>(
-      buildWhen: (prev, curr) {
-        final prevName = prev is RoutersLoaded ? prev.selectedRouter?.name : null;
-        final currName = curr is RoutersLoaded ? curr.selectedRouter?.name : null;
-        return prevName != currName;
-      },
-      builder: (context, state) {
-        final selected = state is RoutersLoaded ? state.selectedRouter : null;
+class _ContextRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
-          child: Material(
-            color: AppColors.bgSubtle,
-            borderRadius: AppSpacing.borderSm,
-            child: InkWell(
-              onTap: () => context.go('/routers'),
-              mouseCursor: SystemMouseCursors.click,
-              hoverColor: AppColors.primaryLight,
-              borderRadius: AppSpacing.borderSm,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH, vertical: AppSpacing.gapSm),
-                child: Row(
+  const _ContextRow({required this.icon, required this.title, required this.subtitle, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: AppSpacing.borderSm,
+      child: InkWell(
+        onTap: onTap,
+        mouseCursor: SystemMouseCursors.click,
+        hoverColor: AppColors.primaryLight,
+        borderRadius: AppSpacing.borderSm,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH, vertical: AppSpacing.gapSm),
+          child: Row(
+            children: [
+              Icon(icon, size: AppSpacing.navIconSize, color: AppColors.textTertiary),
+              const SizedBox(width: AppSpacing.gapSm),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.router_rounded, size: AppSpacing.navIconSize, color: textTertiary),
-                    const SizedBox(width: AppSpacing.gapSm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            selected?.name ?? 'Aucun routeur',
-                            style: AppTypography.navItem.copyWith(color: textSecondary),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            selected != null ? '${selected.ip}:${selected.port}' : 'Choisir un routeur',
-                            style: AppTypography.techData.copyWith(color: textTertiary),
-                          ),
-                        ],
-                      ),
+                    Text(
+                      title,
+                      style: AppTypography.navItem.copyWith(color: AppColors.textSecondary),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    Icon(Icons.swap_horiz_rounded, size: AppSpacing.iconSm, color: textTertiary),
+                    Text(
+                      subtitle,
+                      style: AppTypography.techData.copyWith(color: AppColors.textTertiary),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   ],
                 ),
               ),
-            ),
+              Icon(Icons.swap_horiz_rounded, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+            ],
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }
 
 // -----------------------------------------------------------------------------
-// Bouton déconnexion
+// Compte — utilisateur + déconnexion
 // -----------------------------------------------------------------------------
 
-class _LogoutButton extends StatelessWidget {
-  Future<void> _confirm(BuildContext context) async {
+class _AccountFooter extends StatelessWidget {
+  Future<void> _confirmLogout(BuildContext context) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -231,95 +272,62 @@ class _LogoutButton extends StatelessWidget {
       listener: (context, state) {
         if (state is LogoutSuccess) context.go('/login');
       },
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapXs),
-        child: Material(
-          color: Colors.transparent,
-          borderRadius: AppSpacing.borderSm,
-          child: InkWell(
-            onTap: () => _confirm(context),
-            mouseCursor: SystemMouseCursors.click,
-            hoverColor: AppColors.bgSubtle,
-            borderRadius: AppSpacing.borderSm,
-            child: SizedBox(
-              height: AppSpacing.navItemHeight,
+      child: BlocBuilder<LoginBloc, LoginState>(
+        builder: (context, state) {
+          if (state is! LoginAuthenticated) return const SizedBox.shrink();
+          final user = state.user;
+          final displayName = user.name.isNotEmpty ? user.name : user.username;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
+            child: _DashedBorderBox(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH),
+                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
                 child: Row(
                   children: [
-                    Icon(Icons.logout_rounded, size: AppSpacing.navIconSize, color: AppColors.textTertiary),
-                    const SizedBox(width: AppSpacing.gapSm),
-                    Text('Se déconnecter', style: AppTypography.navItem.copyWith(color: AppColors.textSecondary)),
+                    Container(
+                      width: AppSpacing.avatarSm,
+                      height: AppSpacing.avatarSm,
+                      decoration: BoxDecoration(color: AppColors.primaryLight, borderRadius: AppSpacing.borderFull),
+                      child: Center(
+                        child: Text(
+                          displayName[0].toUpperCase(),
+                          style: AppTypography.labelMd.copyWith(color: AppColors.primary),
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: AppSpacing.gapSm),
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            displayName,
+                            style: AppTypography.userName.copyWith(color: AppColors.textPrimary),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            _roleLabel(user.role),
+                            style: AppTypography.userRole.copyWith(color: AppColors.textTertiary),
+                          ),
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.logout_rounded),
+                      iconSize: AppSpacing.iconMd,
+                      color: AppColors.textTertiary,
+                      tooltip: 'Se déconnecter',
+                      onPressed: () => _confirmLogout(context),
+                    ),
                   ],
                 ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Footer utilisateur
-// -----------------------------------------------------------------------------
-
-class _SidebarFooter extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<LoginBloc, LoginState>(
-      builder: (context, state) {
-        if (state is! LoginAuthenticated) return const SizedBox.shrink();
-        final user = state.user;
-        final displayName = user.name.isNotEmpty ? user.name : user.username;
-        final primaryColor = AppColors.primary;
-        final primaryLight = AppColors.primaryLight;
-        final textPrimary = AppColors.textPrimary;
-        final textTertiary = AppColors.textTertiary;
-
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
-          child: _DashedBorderBox(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.gapSm,
-                vertical: AppSpacing.gapSm,
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: AppSpacing.avatarSm,
-                    height: AppSpacing.avatarSm,
-                    decoration: BoxDecoration(color: primaryLight, borderRadius: AppSpacing.borderFull),
-                    child: Center(
-                      child: Text(
-                        displayName[0].toUpperCase(),
-                        style: AppTypography.labelMd.copyWith(color: primaryColor),
-                      ),
-                    ),
-                  ),
-                  SizedBox(width: AppSpacing.gapSm),
-                  Expanded(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          displayName,
-                          style: AppTypography.userName.copyWith(color: textPrimary),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(_roleLabel(user.role), style: AppTypography.userRole.copyWith(color: textTertiary)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
     );
   }
 

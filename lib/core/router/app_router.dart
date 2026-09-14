@@ -5,6 +5,7 @@ import 'package:aminci/features/app/app_shell.dart';
 import 'package:aminci/features/hotspot/presentation/screens/hotspot_screen.dart';
 import 'package:aminci/features/login/presentation/screens/login_screen.dart';
 import 'package:aminci/features/launch/presentation/screens/launch_screen.dart';
+import 'package:aminci/features/profiles/presentation/screens/profiles_screen.dart';
 import 'package:aminci/features/routers/presentation/screens/routers_screen.dart';
 import 'package:aminci/features/setup/presentation/screens/setup_screen.dart';
 
@@ -21,7 +22,7 @@ final GoRouter appRouter = GoRouter(
       routes: [
         GoRoute(path: '/dashboard', builder: (ctx, s) => const Placeholder()),
         GoRoute(path: '/sessions', builder: (ctx, s) => const Placeholder()),
-        GoRoute(path: '/profiles', builder: (ctx, s) => const Placeholder()),
+        GoRoute(path: '/profiles', builder: (ctx, s) => const ProfilesScreen()),
         GoRoute(path: '/history', builder: (ctx, s) => const Placeholder()),
       ],
     ),

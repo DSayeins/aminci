@@ -14,6 +14,7 @@ class AppTextField extends StatefulWidget {
     required this.label,
     required this.controller,
     this.hint,
+    this.tooltip,
     this.focusNode,
     this.nextFocus,
     this.enabled = true,
@@ -27,6 +28,11 @@ class AppTextField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final String? hint;
+
+  /// Explication affichée au survol d'une icône info à côté du label —
+  /// pour les champs dont le format ou le comportement n'est pas évident.
+  final String? tooltip;
+
   final FocusNode? focusNode;
   final FocusNode? nextFocus;
   final bool enabled;
@@ -66,9 +72,21 @@ class _AppTextFieldState extends State<AppTextField> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          widget.label,
-          style: AppTypography.labelMd.copyWith(color: AppColors.textSecondary),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              widget.label,
+              style: AppTypography.labelMd.copyWith(color: AppColors.textSecondary),
+            ),
+            if (widget.tooltip != null) ...[
+              const SizedBox(width: AppSpacing.gapXs),
+              Tooltip(
+                message: widget.tooltip!,
+                child: const Icon(Icons.info_outline_rounded, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+              ),
+            ],
+          ],
         ),
         const SizedBox(height: AppSpacing.gapSm),
         TextField(

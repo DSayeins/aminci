@@ -37,6 +37,21 @@ class VouchersRepositoryImpl implements VouchersRepository {
   }
 
   @override
+  Future<Either<Failure, void>> deleteAllForProfile(MikroTikRouter router, HotspotProfile profile) {
+    return ErrorMapper.guard(() async {
+      // On récupère les vouchers directement depuis le routeur (pas le cache
+      // local) pour être sûr de tous les supprimer même si le cache est
+      // désynchronisé (ex: écran vouchers jamais ouvert pour ce profil).
+      final remoteVouchers = await _remote.getVouchers(router, profile);
+      final mikrotikIds = remoteVouchers.map((v) => v.mikrotikId).whereType<String>().toList();
+      if (mikrotikIds.isNotEmpty) {
+        await _remote.deleteVouchers(router, mikrotikIds);
+      }
+      await _local.deleteAllForProfile(router.id, profile.mikrotikName);
+    }, fallbackMessage: 'Impossible de supprimer les vouchers du profil');
+  }
+
+  @override
   Future<Either<Failure, List<Voucher>>> generate(
     MikroTikRouter router,
     HotspotProfile profile, {

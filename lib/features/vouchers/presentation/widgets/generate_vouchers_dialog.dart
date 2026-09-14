@@ -152,9 +152,11 @@ class _GenerateVouchersDialogState extends State<_GenerateVouchersDialog> {
                 children: [
                   Expanded(
                     child: AppTextField(
-                      label: 'Validité (ex: 1h, 1d)',
+                      label: 'Validité',
                       controller: _validityController,
-                      hint: 'illimité',
+                      hint: '1d',
+                      tooltip:
+                          'Durée de connexion cumulée autorisée avant expiration. Format MikroTik : h (heures), d (jours), w (semaines) — ex: 3h, 1d, 1w1d. Vide = illimité.',
                       enabled: !_isSubmitting,
                     ),
                   ),
@@ -163,7 +165,8 @@ class _GenerateVouchersDialogState extends State<_GenerateVouchersDialog> {
                     child: AppTextField(
                       label: 'Quota de données (Go)',
                       controller: _quotaController,
-                      hint: 'illimité',
+                      hint: '5',
+                      tooltip: 'Volume de données total autorisé (envoi + réception), en gigaoctets. Vide ou 0 = illimité.',
                       enabled: !_isSubmitting,
                     ),
                   ),

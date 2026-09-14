@@ -61,11 +61,11 @@ pw.Widget _voucherGrid(List<Voucher> pageVouchers, String batchCode, int startIn
   final rows = <pw.Widget>[];
 
   for (var i = 0; i < pageVouchers.length; i += _voucherColumns) {
-    if (rows.isNotEmpty) rows.add(pw.SizedBox(height: _cardRowSpacing));
+    if (rows.isNotEmpty) rows.add(_horizontalCutLine());
 
     final cells = <pw.Widget>[];
     for (var col = 0; col < _voucherColumns; col++) {
-      if (col > 0) cells.add(pw.SizedBox(width: _cardColumnSpacing));
+      if (col > 0) cells.add(_verticalCutLine());
       final itemIndex = i + col;
       cells.add(
         pw.Expanded(
@@ -84,8 +84,24 @@ pw.Widget _voucherGrid(List<Voucher> pageVouchers, String batchCode, int startIn
     );
   }
 
-  return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.start, children: rows);
+  return pw.Column(crossAxisAlignment: pw.CrossAxisAlignment.stretch, children: rows);
 }
+
+/// Ligne de découpe pointillée verticale, entre deux colonnes de la grille.
+pw.Widget _verticalCutLine() => pw.Container(
+  width: _cardColumnSpacing,
+  decoration: const pw.BoxDecoration(
+    border: pw.Border(left: pw.BorderSide(color: PdfColors.grey400, width: 0.75, style: pw.BorderStyle.dashed)),
+  ),
+);
+
+/// Ligne de découpe pointillée horizontale, entre deux lignes de la grille.
+pw.Widget _horizontalCutLine() => pw.Container(
+  height: _cardRowSpacing,
+  decoration: const pw.BoxDecoration(
+    border: pw.Border(top: pw.BorderSide(color: PdfColors.grey400, width: 0.75, style: pw.BorderStyle.dashed)),
+  ),
+);
 
 /// Génère une fiche imprimable des [vouchers] du profil [profile], sous forme
 /// de cartes (une par voucher, avec QR code), et ouvre la boîte de dialogue

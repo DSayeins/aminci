@@ -1,7 +1,13 @@
+import 'package:aminci/core/mikrotik/mikrotik_exception.dart';
 import 'package:aminci/core/mikrotik/mikrotik_rest_client.dart';
 import 'package:aminci/core/models/profile.dart';
 import 'package:aminci/core/models/router.dart';
 import 'package:aminci/core/models/voucher.dart';
+import 'package:aminci/features/vouchers/data/datasources/voucher_code_generator.dart';
+
+/// Nombre de tentatives avant d'abandonner un voucher dont le nom généré
+/// entre en collision avec un compte déjà existant sur le routeur.
+const int _maxNameCollisionRetries = 5;
 
 /// Accès REST MikroTik pour la feature vouchers.
 class VoucherRemoteDatasource {
@@ -71,17 +77,34 @@ class VoucherRemoteDatasource {
     try {
       final created = <Voucher>[];
       for (final credential in credentials) {
-        final body = <String, dynamic>{
-          'name': credential.code,
-          'password': credential.password,
-          'profile': profile.mikrotikName,
-          if (server != null && server.isNotEmpty) 'server': server,
-          if (limitUptime != null && limitUptime.isNotEmpty) 'limit-uptime': limitUptime,
-          if (limitBytesTotal > 0) 'limit-bytes-total': limitBytesTotal.toString(),
-          if (comment != null && comment.isNotEmpty) 'comment': comment,
-        };
-        final result = await client.put('/ip/hotspot/user', body);
-        created.add(Voucher.fromRestJson(result, routerId: router.id, profileName: profile.mikrotikName));
+        var code = credential.code;
+        var password = credential.password;
+
+        for (var attempt = 0; ; attempt++) {
+          final body = <String, dynamic>{
+            'name': code,
+            'password': password,
+            'profile': profile.mikrotikName,
+            if (server != null && server.isNotEmpty) 'server': server,
+            if (limitUptime != null && limitUptime.isNotEmpty) 'limit-uptime': limitUptime,
+            if (limitBytesTotal > 0) 'limit-bytes-total': limitBytesTotal.toString(),
+            if (comment != null && comment.isNotEmpty) 'comment': comment,
+          };
+          try {
+            final result = await client.put('/ip/hotspot/user', body);
+            created.add(Voucher.fromRestJson(result, routerId: router.id, profileName: profile.mikrotikName));
+            break;
+          } on MikroTikException catch (e) {
+            // Le code généré aléatoirement entre en collision avec un compte
+            // déjà présent sur le routeur (ex: ancien voucher, autre profil).
+            // On retente avec un nouveau code plutôt que de faire échouer
+            // tout le lot déjà créé.
+            final isNameCollision = e.message.toLowerCase().contains('already have a user with this name');
+            if (!isNameCollision || attempt >= _maxNameCollisionRetries) rethrow;
+            code = VoucherCodeGenerator.code();
+            password = VoucherCodeGenerator.password();
+          }
+        }
       }
       return created;
     } finally {

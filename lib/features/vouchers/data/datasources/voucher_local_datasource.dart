@@ -44,6 +44,16 @@ class VoucherLocalDatasource {
     }
   }
 
+  /// Supprime tous les vouchers du profil [profileName] du routeur [routerId]
+  /// — appelé lors de la suppression du profil lui-même.
+  Future<void> deleteAllForProfile(int routerId, String profileName) async {
+    try {
+      await _db.delete('vouchers', where: 'router_id = ? AND profile_name = ?', whereArgs: [routerId, profileName]);
+    } catch (e) {
+      throw StorageException('Impossible de supprimer les vouchers du profil : $e');
+    }
+  }
+
   /// Synchronise le cache local avec [remoteVouchers] pour le profil
   /// [profileName] du routeur [routerId] : met à jour les vouchers déjà
   /// connus en conservant leur `price`/`status`/`created_at`/`created_by`

@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:aminci/core/di/service_locator.dart';
 import 'package:aminci/core/models/profile.dart';
 import 'package:aminci/core/models/router.dart';
 import 'package:aminci/core/theme/app_colors.dart';
@@ -10,6 +13,7 @@ import 'package:aminci/core/utils/currency_formatter.dart';
 import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
 import 'package:aminci/features/profiles/presentation/widgets/add_profile_dialog.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
+import 'package:aminci/features/vouchers/domain/usecases/delete_vouchers_for_profile.dart';
 import 'package:aminci/features/vouchers/presentation/screens/profile_vouchers_screen.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
 import 'package:aminci/shared/widgets/error_view.dart';
@@ -162,6 +166,10 @@ class _ProfileCard extends StatelessWidget {
 
     if (confirmed == true && context.mounted) {
       context.read<ProfilesBloc>().add(ProfileDeleteRequested(router, profile));
+      // Suppression en cascade des vouchers du profil — best-effort, en
+      // tâche de fond : ne bloque pas la suppression du profil et n'affiche
+      // pas d'erreur séparée si le routeur est momentanément injoignable.
+      unawaited(sl<DeleteVouchersForProfile>()(router, profile));
     }
   }
 

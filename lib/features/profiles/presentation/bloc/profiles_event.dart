@@ -28,6 +28,17 @@ final class ProfileCreateRequested extends ProfilesEvent {
   List<Object> get props => [router, profile];
 }
 
+/// Modifie [profile] sur le routeur [router].
+final class ProfileUpdateRequested extends ProfilesEvent {
+  final MikroTikRouter router;
+  final HotspotProfile profile;
+
+  const ProfileUpdateRequested(this.router, this.profile);
+
+  @override
+  List<Object> get props => [router, profile];
+}
+
 /// Supprime [profile] sur le routeur [router].
 final class ProfileDeleteRequested extends ProfilesEvent {
   final MikroTikRouter router;

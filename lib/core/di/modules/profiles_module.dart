@@ -6,7 +6,9 @@ import 'package:aminci/features/profiles/data/repositories/profiles_repository_i
 import 'package:aminci/features/profiles/domain/repository/profiles_repository.dart';
 import 'package:aminci/features/profiles/domain/usecases/create_profile.dart';
 import 'package:aminci/features/profiles/domain/usecases/delete_profile.dart';
+import 'package:aminci/features/profiles/domain/usecases/get_address_pools.dart';
 import 'package:aminci/features/profiles/domain/usecases/get_profiles.dart';
+import 'package:aminci/features/profiles/domain/usecases/update_profile.dart';
 import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
 
 void registerProfilesModule(GetIt sl) {
@@ -16,7 +18,14 @@ void registerProfilesModule(GetIt sl) {
 
   sl.registerFactory(() => GetProfiles(sl()));
   sl.registerFactory(() => CreateProfile(sl()));
+  sl.registerFactory(() => UpdateProfile(sl()));
   sl.registerFactory(() => DeleteProfile(sl()));
+  sl.registerFactory(() => GetAddressPools(sl()));
 
-  sl.registerFactory(() => ProfilesBloc(getProfiles: sl(), createProfile: sl(), deleteProfile: sl()));
+  sl.registerFactory(() => ProfilesBloc(
+        getProfiles: sl(),
+        createProfile: sl(),
+        updateProfile: sl(),
+        deleteProfile: sl(),
+      ));
 }

@@ -27,9 +27,11 @@ class MikroTikRestClient {
     await get('/system/identity');
   }
 
-  Future<List<Map<String, dynamic>>> get(String path) async {
+  /// [query] applique un filtre RouterOS côté serveur (égalité stricte par
+  /// propriété, ex: `{'profile': 'default'}` → `?profile=default`).
+  Future<List<Map<String, dynamic>>> get(String path, {Map<String, dynamic>? query}) async {
     try {
-      final response = await _dio.get<dynamic>(path);
+      final response = await _dio.get<dynamic>(path, queryParameters: query);
       final data = response.data;
       if (data is List) return data.cast<Map<String, dynamic>>();
       if (data is Map<String, dynamic>) return [data];

@@ -127,6 +127,40 @@ class Voucher extends Equatable {
     };
   }
 
+  /// Parse une ligne JSON REST MikroTik (`/ip/hotspot/user/print`).
+  ///
+  /// `price`/`status`/`createdAt`/`createdBy` n'existent pas côté RouterOS —
+  /// laissés à leur défaut, à préserver lors d'une resynchronisation (voir
+  /// `VoucherLocalDatasource.syncFromRemote`). [profileName] est déjà résolu
+  /// (le champ brut `profile` de RouterOS peut être un nom ou un identifiant
+  /// interne selon l'état du profil référencé).
+  factory Voucher.fromRestJson(
+    Map<String, dynamic> map, {
+    required int routerId,
+    required String profileName,
+  }) {
+    return Voucher(
+      id: 0,
+      routerId: routerId,
+      code: (map['name'] ?? '') as String,
+      password: (map['password'] ?? '') as String,
+      profileName: profileName,
+      price: 0,
+      status: VoucherStatus.pending,
+      createdAt: DateTime.now(),
+      createdBy: '',
+      mikrotikId: map['.id'] as String?,
+      server: map['server'] as String?,
+      comment: map['comment'] as String?,
+      limitUptime: map['limit-uptime'] as String?,
+      limitBytesTotal: int.tryParse('${map['limit-bytes-total'] ?? 0}') ?? 0,
+      uptime: map['uptime'] as String?,
+      bytesIn: int.tryParse('${map['bytes-in'] ?? 0}') ?? 0,
+      bytesOut: int.tryParse('${map['bytes-out'] ?? 0}') ?? 0,
+      disabled: map['disabled'] == true || map['disabled'] == 'true',
+    );
+  }
+
   factory Voucher.fromMap(Map<String, dynamic> map) {
     return Voucher(
       id: (map['id'] ?? 0) as int,

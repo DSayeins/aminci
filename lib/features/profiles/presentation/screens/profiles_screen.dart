@@ -10,6 +10,7 @@ import 'package:aminci/core/utils/currency_formatter.dart';
 import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
 import 'package:aminci/features/profiles/presentation/widgets/add_profile_dialog.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
+import 'package:aminci/features/vouchers/presentation/screens/profile_vouchers_screen.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
 import 'package:aminci/shared/widgets/error_view.dart';
 
@@ -223,11 +224,29 @@ class _ProfileCard extends StatelessWidget {
                 ),
               ),
               IconButton(
+                icon: const Icon(Icons.edit_outlined),
+                onPressed: () => showEditProfileDialog(context, router, profile),
+                tooltip: 'Modifier',
+              ),
+              IconButton(
                 icon: const Icon(Icons.delete_outline_rounded),
                 onPressed: () => _confirmDelete(context),
                 tooltip: 'Supprimer',
               ),
             ],
+          ),
+          const SizedBox(height: AppSpacing.gapSm),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () => showProfileVouchersScreen(context, router, profile),
+              icon: const Icon(Icons.confirmation_number_outlined, size: AppSpacing.iconSm),
+              label: const Text('Vouchers'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.textOnPrimary,
+              ),
+            ),
           ),
         ],
       ),

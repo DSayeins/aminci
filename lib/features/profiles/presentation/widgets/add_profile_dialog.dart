@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:aminci/core/di/service_locator.dart';
 import 'package:aminci/core/models/profile.dart';
 import 'package:aminci/core/models/router.dart';
 import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/theme/app_typography.dart';
+import 'package:aminci/features/profiles/domain/usecases/get_address_pools.dart';
 import 'package:aminci/features/profiles/presentation/bloc/profiles_bloc.dart';
 import 'package:aminci/shared/widgets/app_text_field.dart';
 
@@ -22,21 +24,38 @@ Future<void> showAddProfileDialog(BuildContext context, MikroTikRouter router) {
   );
 }
 
+/// Ouvre le dialog de modification d'un profil existant et attend sa fermeture.
+Future<void> showEditProfileDialog(BuildContext context, MikroTikRouter router, HotspotProfile profile) {
+  return showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => BlocProvider.value(
+      value: context.read<ProfilesBloc>(),
+      child: _AddProfileDialog(router: router, profile: profile),
+    ),
+  );
+}
+
 class _AddProfileDialog extends StatefulWidget {
   final MikroTikRouter router;
 
-  const _AddProfileDialog({required this.router});
+  /// Profil à modifier — `null` pour un ajout.
+  final HotspotProfile? profile;
+
+  const _AddProfileDialog({required this.router, this.profile});
 
   @override
   State<_AddProfileDialog> createState() => _AddProfileDialogState();
 }
 
 class _AddProfileDialogState extends State<_AddProfileDialog> {
-  final _nameController = TextEditingController();
-  final _rateLimitController = TextEditingController();
-  final _sessionTimeoutController = TextEditingController();
-  final _sharedUsersController = TextEditingController(text: '1');
-  final _priceController = TextEditingController();
+  late final _nameController = TextEditingController(text: widget.profile?.mikrotikName);
+  late final _rateLimitController = TextEditingController(text: widget.profile?.rateLimit);
+  late final _sessionTimeoutController = TextEditingController(text: widget.profile?.sessionTimeout);
+  late final _sharedUsersController = TextEditingController(text: (widget.profile?.sharedUsers ?? 1).toString());
+  late final _priceController = TextEditingController(
+    text: widget.profile != null ? widget.profile!.price.toStringAsFixed(0) : '',
+  );
 
   final _rateLimitFocus = FocusNode();
   final _sessionTimeoutFocus = FocusNode();
@@ -44,6 +63,29 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
   final _priceFocus = FocusNode();
 
   String? _error;
+  late String? _selectedAddressPool = widget.profile?.addressPool;
+  List<String> _addressPools = [];
+  bool _loadingPools = true;
+
+  bool get _isEditing => widget.profile != null;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAddressPools();
+  }
+
+  Future<void> _loadAddressPools() async {
+    final result = await sl<GetAddressPools>()(widget.router);
+    if (!mounted) return;
+    result.fold(
+      (_) => setState(() => _loadingPools = false), // silencieux — le pool reste optionnel
+      (pools) => setState(() {
+        _addressPools = pools;
+        _loadingPools = false;
+      }),
+    );
+  }
 
   @override
   void dispose() {
@@ -73,16 +115,21 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
     if (price == null || price < 0) { setState(() => _error = 'Prix invalide'); return; }
 
     final profile = HotspotProfile(
-      id: 0,
+      id: widget.profile?.id ?? 0,
       routerId: widget.router.id,
+      mikrotikId: widget.profile?.mikrotikId,
       mikrotikName: name,
       rateLimit: rateLimit.isEmpty ? null : rateLimit,
       sessionTimeout: sessionTimeout.isEmpty ? null : sessionTimeout,
+      addressPool: _selectedAddressPool,
       sharedUsers: sharedUsers,
       price: price,
+      expiresAt: widget.profile?.expiresAt,
     );
 
-    context.read<ProfilesBloc>().add(ProfileCreateRequested(widget.router, profile));
+    context.read<ProfilesBloc>().add(
+      _isEditing ? ProfileUpdateRequested(widget.router, profile) : ProfileCreateRequested(widget.router, profile),
+    );
   }
 
   @override
@@ -97,7 +144,7 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
           final isLoading = state is ProfilesLoaded && state.isBusy;
 
           return AlertDialog(
-            title: const Text('Ajouter un profil'),
+            title: Text(_isEditing ? 'Modifier le profil' : 'Ajouter un profil'),
             contentPadding: AppSpacing.insetCard,
             content: SizedBox(
               width: AppSpacing.dialogWidth,
@@ -145,6 +192,46 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.gapLg),
+
+                    if (_loadingPools) ...[
+                      const Center(child: SizedBox(
+                        width: AppSpacing.iconMd,
+                        height: AppSpacing.iconMd,
+                        child: CircularProgressIndicator(strokeWidth: AppSpacing.borderDefault),
+                      )),
+                      const SizedBox(height: AppSpacing.gapLg),
+                    ] else if (_addressPools.isNotEmpty) ...[
+                      Text(
+                        'Pool d\'adresses',
+                        style: AppTypography.labelMd.copyWith(color: AppColors.textSecondary),
+                      ),
+                      const SizedBox(height: AppSpacing.gapSm),
+                      Wrap(
+                        spacing: AppSpacing.gapSm,
+                        runSpacing: AppSpacing.gapSm,
+                        children: _addressPools.map((pool) {
+                          final selected = pool == _selectedAddressPool;
+                          return ChoiceChip(
+                            label: Text(pool),
+                            selected: selected,
+                            onSelected: isLoading
+                                ? null
+                                : (value) => setState(() => _selectedAddressPool = value ? pool : null),
+                            selectedColor: AppColors.primaryLight,
+                            labelStyle: AppTypography.labelMd.copyWith(
+                              color: selected ? AppColors.primary : AppColors.textSecondary,
+                            ),
+                            side: BorderSide(
+                              color: selected ? AppColors.primary : AppColors.borderDefault,
+                              width: selected ? AppSpacing.borderDefault : AppSpacing.borderThin,
+                            ),
+                            backgroundColor: AppColors.bgSurface,
+                            shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: AppSpacing.gapLg),
+                    ],
 
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,7 +316,7 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
                             color: AppColors.textOnPrimary,
                           ),
                         )
-                      : const Text('Ajouter'),
+                      : Text(_isEditing ? 'Enregistrer' : 'Ajouter'),
                 ),
               ),
             ],

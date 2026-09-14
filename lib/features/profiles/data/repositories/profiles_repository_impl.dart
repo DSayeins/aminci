@@ -32,6 +32,15 @@ class ProfilesRepositoryImpl implements ProfilesRepository {
   }
 
   @override
+  Future<Either<Failure, HotspotProfile>> update(MikroTikRouter router, HotspotProfile profile) {
+    return ErrorMapper.guard(() async {
+      final updated = await _remote.updateProfile(router, profile);
+      final merged = updated.copyWith(id: profile.id, price: profile.price, expiresAt: profile.expiresAt);
+      return _local.updateProfile(merged);
+    }, fallbackMessage: 'Impossible de modifier le profil');
+  }
+
+  @override
   Future<Either<Failure, void>> delete(MikroTikRouter router, HotspotProfile profile) {
     return ErrorMapper.guard(() async {
       final mikrotikId = profile.mikrotikId;
@@ -40,5 +49,13 @@ class ProfilesRepositoryImpl implements ProfilesRepository {
       }
       await _local.deleteProfile(profile.id);
     }, fallbackMessage: 'Impossible de supprimer le profil');
+  }
+
+  @override
+  Future<Either<Failure, List<String>>> getAddressPools(MikroTikRouter router) {
+    return ErrorMapper.guard(
+      () => _remote.getAddressPools(router),
+      fallbackMessage: 'Impossible de charger les pools d\'adresses',
+    );
   }
 }

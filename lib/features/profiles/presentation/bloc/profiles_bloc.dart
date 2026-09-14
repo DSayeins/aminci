@@ -6,6 +6,7 @@ import 'package:aminci/core/models/router.dart';
 import 'package:aminci/features/profiles/domain/usecases/create_profile.dart';
 import 'package:aminci/features/profiles/domain/usecases/delete_profile.dart';
 import 'package:aminci/features/profiles/domain/usecases/get_profiles.dart';
+import 'package:aminci/features/profiles/domain/usecases/update_profile.dart';
 
 part 'profiles_event.dart';
 part 'profiles_state.dart';
@@ -13,18 +14,22 @@ part 'profiles_state.dart';
 class ProfilesBloc extends Bloc<ProfilesEvent, ProfilesState> {
   final GetProfiles _getProfiles;
   final CreateProfile _createProfile;
+  final UpdateProfile _updateProfile;
   final DeleteProfile _deleteProfile;
 
   ProfilesBloc({
     required GetProfiles getProfiles,
     required CreateProfile createProfile,
+    required UpdateProfile updateProfile,
     required DeleteProfile deleteProfile,
   })  : _getProfiles = getProfiles,
         _createProfile = createProfile,
+        _updateProfile = updateProfile,
         _deleteProfile = deleteProfile,
         super(const ProfilesInitial()) {
     on<ProfilesLoadRequested>(_onLoadRequested);
     on<ProfileCreateRequested>(_onCreateRequested);
+    on<ProfileUpdateRequested>(_onUpdateRequested);
     on<ProfileDeleteRequested>(_onDeleteRequested);
   }
 
@@ -45,6 +50,17 @@ class ProfilesBloc extends Bloc<ProfilesEvent, ProfilesState> {
     result.fold(
       (failure) => emit(ProfilesError(failure.message, profiles: current)),
       (profile) => emit(ProfilesLoaded([...current, profile])),
+    );
+  }
+
+  Future<void> _onUpdateRequested(ProfileUpdateRequested event, Emitter<ProfilesState> emit) async {
+    final current = state is ProfilesLoaded ? (state as ProfilesLoaded).profiles : <HotspotProfile>[];
+    emit(ProfilesLoaded(current, isBusy: true));
+
+    final result = await _updateProfile(event.router, event.profile);
+    result.fold(
+      (failure) => emit(ProfilesError(failure.message, profiles: current)),
+      (updated) => emit(ProfilesLoaded(current.map((p) => p.id == updated.id ? updated : p).toList())),
     );
   }
 

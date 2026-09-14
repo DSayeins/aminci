@@ -18,6 +18,15 @@ class ProfileLocalDatasource {
     }
   }
 
+  Future<HotspotProfile> updateProfile(HotspotProfile profile) async {
+    try {
+      await _db.update('profiles', profile.toMap(), where: 'id = ?', whereArgs: [profile.id]);
+      return profile;
+    } catch (e) {
+      throw StorageException('Impossible de modifier le profil : $e');
+    }
+  }
+
   Future<void> deleteProfile(int id) async {
     try {
       await _db.delete('profiles', where: 'id = ?', whereArgs: [id]);

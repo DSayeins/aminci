@@ -51,6 +51,30 @@ class ProfileRemoteDatasource {
     }
   }
 
+  /// Modifie un profil hotspot (`PATCH /ip/hotspot/user/profile/{id}`) sur
+  /// le routeur. Lance [MikroTikException] en cas d'échec.
+  Future<HotspotProfile> updateProfile(MikroTikRouter router, HotspotProfile profile) async {
+    final client = MikroTikRestClient(
+      ip: router.ip,
+      port: router.port,
+      username: router.username,
+      password: router.password,
+    );
+    try {
+      final body = <String, dynamic>{
+        'name': profile.mikrotikName,
+        'rate-limit': profile.rateLimit ?? '',
+        'session-timeout': profile.sessionTimeout ?? '',
+        'address-pool': profile.addressPool ?? '',
+        'shared-users': profile.sharedUsers.toString(),
+      };
+      final result = await client.patch('/ip/hotspot/user/profile/${profile.mikrotikId}', body);
+      return HotspotProfile.fromRestJson(result, routerId: router.id).copyWith(price: profile.price);
+    } finally {
+      client.close();
+    }
+  }
+
   /// Supprime un profil hotspot (`DELETE /ip/hotspot/user/profile/{id}`) sur
   /// le routeur. Lance [MikroTikException] en cas d'échec.
   Future<void> deleteProfile(MikroTikRouter router, String mikrotikId) async {
@@ -62,6 +86,23 @@ class ProfileRemoteDatasource {
     );
     try {
       await client.delete('/ip/hotspot/user/profile/$mikrotikId');
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Liste les noms des pools d'adresses (`/ip/pool/print`) du routeur —
+  /// pour peupler le sélecteur d'`address-pool` du formulaire de profil.
+  Future<List<String>> getAddressPools(MikroTikRouter router) async {
+    final client = MikroTikRestClient(
+      ip: router.ip,
+      port: router.port,
+      username: router.username,
+      password: router.password,
+    );
+    try {
+      final rows = await client.get('/ip/pool');
+      return rows.map((row) => (row['name'] ?? '') as String).where((name) => name.isNotEmpty).toList();
     } finally {
       client.close();
     }

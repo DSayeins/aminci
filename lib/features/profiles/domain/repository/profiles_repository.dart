@@ -12,6 +12,13 @@ abstract class ProfilesRepository {
   /// Crée un profil sur le routeur puis le persiste en cache local.
   Future<Either<Failure, HotspotProfile>> create(MikroTikRouter router, HotspotProfile profile);
 
+  /// Modifie un profil sur le routeur puis met à jour le cache local.
+  Future<Either<Failure, HotspotProfile>> update(MikroTikRouter router, HotspotProfile profile);
+
   /// Supprime un profil sur le routeur puis en cache local.
   Future<Either<Failure, void>> delete(MikroTikRouter router, HotspotProfile profile);
+
+  /// Liste les pools d'adresses disponibles sur le routeur — pour le
+  /// sélecteur d'`address-pool` du formulaire de profil.
+  Future<Either<Failure, List<String>>> getAddressPools(MikroTikRouter router);
 }

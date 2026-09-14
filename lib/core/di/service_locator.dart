@@ -8,6 +8,7 @@ import 'package:aminci/core/di/modules/launch_module.dart';
 import 'package:aminci/core/di/modules/profiles_module.dart';
 import 'package:aminci/core/di/modules/routers_module.dart';
 import 'package:aminci/core/di/modules/setup_module.dart';
+import 'package:aminci/core/di/modules/vouchers_module.dart';
 
 final sl = GetIt.instance;
 
@@ -24,4 +25,5 @@ Future<void> setupServiceLocator() async {
   registerRoutersModule(sl);
   registerHotspotModule(sl);
   registerProfilesModule(sl);
+  registerVouchersModule(sl);
 }

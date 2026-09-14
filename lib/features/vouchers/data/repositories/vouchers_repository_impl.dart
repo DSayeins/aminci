@@ -23,4 +23,15 @@ class VouchersRepositoryImpl implements VouchersRepository {
       return _local.getByProfile(router.id, profile.mikrotikName);
     }, fallbackMessage: 'Impossible de charger les vouchers');
   }
+
+  @override
+  Future<Either<Failure, void>> deleteMany(MikroTikRouter router, List<Voucher> vouchers) {
+    return ErrorMapper.guard(() async {
+      final mikrotikIds = vouchers.map((v) => v.mikrotikId).whereType<String>().toList();
+      if (mikrotikIds.isNotEmpty) {
+        await _remote.deleteVouchers(router, mikrotikIds);
+      }
+      await _local.deleteMany(vouchers.map((v) => v.id).toList());
+    }, fallbackMessage: 'Impossible de supprimer les vouchers');
+  }
 }

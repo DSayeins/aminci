@@ -49,4 +49,23 @@ class VoucherRemoteDatasource {
       client.close();
     }
   }
+
+  /// Supprime plusieurs vouchers (`DELETE /ip/hotspot/user/{id}`) sur le
+  /// routeur. Un seul client REST est réutilisé pour toute la série.
+  /// Lance [MikroTikException] au premier échec.
+  Future<void> deleteVouchers(MikroTikRouter router, List<String> mikrotikIds) async {
+    final client = MikroTikRestClient(
+      ip: router.ip,
+      port: router.port,
+      username: router.username,
+      password: router.password,
+    );
+    try {
+      for (final id in mikrotikIds) {
+        await client.delete('/ip/hotspot/user/$id');
+      }
+    } finally {
+      client.close();
+    }
+  }
 }

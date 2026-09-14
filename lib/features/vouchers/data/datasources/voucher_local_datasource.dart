@@ -23,6 +23,17 @@ class VoucherLocalDatasource {
     }
   }
 
+  /// Supprime les vouchers [ids] du cache local.
+  Future<void> deleteMany(List<int> ids) async {
+    if (ids.isEmpty) return;
+    try {
+      final placeholders = List.filled(ids.length, '?').join(', ');
+      await _db.delete('vouchers', where: 'id IN ($placeholders)', whereArgs: ids);
+    } catch (e) {
+      throw StorageException('Impossible de supprimer les vouchers : $e');
+    }
+  }
+
   /// Synchronise le cache local avec [remoteVouchers] pour le profil
   /// [profileName] du routeur [routerId] : met à jour les vouchers déjà
   /// connus en conservant leur `price`/`status`/`created_at`/`created_by`

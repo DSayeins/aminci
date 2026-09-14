@@ -17,3 +17,14 @@ final class VouchersLoadRequested extends VouchersEvent {
   @override
   List<Object> get props => [router, profile];
 }
+
+/// Supprime [vouchers] sur le routeur [router].
+final class VouchersDeleteRequested extends VouchersEvent {
+  final MikroTikRouter router;
+  final List<Voucher> vouchers;
+
+  const VouchersDeleteRequested(this.router, this.vouchers);
+
+  @override
+  List<Object> get props => [router, vouchers];
+}

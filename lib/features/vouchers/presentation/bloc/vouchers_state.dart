@@ -17,18 +17,20 @@ final class VouchersLoading extends VouchersState {
 
 final class VouchersLoaded extends VouchersState {
   final List<Voucher> vouchers;
+  final bool isBusy;
 
-  const VouchersLoaded(this.vouchers);
+  const VouchersLoaded(this.vouchers, {this.isBusy = false});
 
   @override
-  List<Object> get props => [vouchers];
+  List<Object> get props => [vouchers, isBusy];
 }
 
 final class VouchersError extends VouchersState {
   final String message;
+  final List<Voucher> vouchers;
 
-  const VouchersError(this.message);
+  const VouchersError(this.message, {this.vouchers = const []});
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, vouchers];
 }

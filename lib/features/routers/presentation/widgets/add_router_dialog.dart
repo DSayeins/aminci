@@ -22,27 +22,46 @@ Future<void> showAddRouterDialog(BuildContext context) {
   );
 }
 
+/// Ouvre le dialog de modification d'un routeur existant et attend sa fermeture.
+Future<void> showEditRouterDialog(BuildContext context, MikroTikRouter router) {
+  return showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => BlocProvider.value(
+      value: context.read<RoutersBloc>(),
+      child: _AddRouterDialog(router: router),
+    ),
+  );
+}
+
 class _AddRouterDialog extends StatefulWidget {
-  const _AddRouterDialog();
+  /// Routeur à modifier — `null` pour un ajout.
+  final MikroTikRouter? router;
+
+  const _AddRouterDialog({this.router});
 
   @override
   State<_AddRouterDialog> createState() => _AddRouterDialogState();
 }
 
 class _AddRouterDialogState extends State<_AddRouterDialog> {
-  final _nameController = TextEditingController();
-  final _ipController = TextEditingController();
-  final _portController = TextEditingController(text: '80');
-  final _usernameController = TextEditingController(text: 'admin');
-  final _passwordController = TextEditingController();
+  late final _nameController = TextEditingController(text: widget.router?.name);
+  late final _ipController = TextEditingController(text: widget.router?.ip);
+  late final _portController = TextEditingController(
+    text: (widget.router?.port ?? MikroTikRouter.defaultRestPort).toString(),
+  );
+  late final _usernameController = TextEditingController(text: widget.router?.username ?? 'admin');
+  late final _passwordController = TextEditingController(text: widget.router?.password);
 
   final _ipFocus = FocusNode();
   final _portFocus = FocusNode();
   final _usernameFocus = FocusNode();
   final _passwordFocus = FocusNode();
 
-  RouterOsVersion _rosVersion = RouterOsVersion.v7;
+  late RouterOsVersion _rosVersion = widget.router?.rosVersion ?? RouterOsVersion.v7;
   String? _error;
+
+  bool get _isEditing => widget.router != null;
 
   @override
   void dispose() {
@@ -83,17 +102,17 @@ class _AddRouterDialogState extends State<_AddRouterDialog> {
     if (username.isEmpty) { setState(() => _error = 'Le nom d\'utilisateur est requis'); return; }
     if (password.isEmpty) { setState(() => _error = 'Le mot de passe est requis'); return; }
 
-    context.read<RoutersBloc>().add(RouterAddRequested(
-      MikroTikRouter(
-        id: 0,
-        name: name,
-        ip: ip,
-        port: port,
-        username: username,
-        password: password,
-        rosVersion: _rosVersion,
-      ),
-    ));
+    final router = MikroTikRouter(
+      id: widget.router?.id ?? 0,
+      name: name,
+      ip: ip,
+      port: port,
+      username: username,
+      password: password,
+      rosVersion: _rosVersion,
+    );
+
+    context.read<RoutersBloc>().add(_isEditing ? RouterUpdateRequested(router) : RouterAddRequested(router));
   }
 
   @override
@@ -108,7 +127,7 @@ class _AddRouterDialogState extends State<_AddRouterDialog> {
           final isLoading = state is RoutersLoaded && state.isBusy;
 
           return AlertDialog(
-            title: const Text('Ajouter un routeur'),
+            title: Text(_isEditing ? 'Modifier le routeur' : 'Ajouter un routeur'),
             contentPadding: AppSpacing.insetCard,
             content: SizedBox(
               width: AppSpacing.dialogWidth,
@@ -241,7 +260,7 @@ class _AddRouterDialogState extends State<_AddRouterDialog> {
                             color: AppColors.textOnPrimary,
                           ),
                         )
-                      : const Text('Ajouter'),
+                      : Text(_isEditing ? 'Enregistrer' : 'Ajouter'),
                 ),
               ),
             ],

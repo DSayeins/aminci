@@ -19,6 +19,14 @@ class RouterAddRequested extends RoutersEvent {
   List<Object> get props => [router];
 }
 
+class RouterUpdateRequested extends RoutersEvent {
+  final MikroTikRouter router;
+  const RouterUpdateRequested(this.router);
+
+  @override
+  List<Object> get props => [router];
+}
+
 class RouterDeleteRequested extends RoutersEvent {
   final int id;
   const RouterDeleteRequested(this.id);

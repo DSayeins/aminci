@@ -247,6 +247,11 @@ class _RouterCard extends StatelessWidget {
                   ),
                   const SizedBox(width: AppSpacing.gapSm),
                   IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () => showEditRouterDialog(context, router),
+                    tooltip: 'Modifier',
+                  ),
+                  IconButton(
                     icon: const Icon(Icons.delete_outline_rounded),
                     onPressed: () => _confirmDelete(context, router),
                     tooltip: 'Supprimer',

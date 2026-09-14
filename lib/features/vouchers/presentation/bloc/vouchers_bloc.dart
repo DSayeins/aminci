@@ -22,6 +22,7 @@ class VouchersBloc extends Bloc<VouchersEvent, VouchersState> {
         super(const VouchersInitial()) {
     on<VouchersLoadRequested>(_onLoadRequested);
     on<VouchersDeleteRequested>(_onDeleteRequested);
+    on<VouchersGenerated>(_onGenerated);
   }
 
   Future<void> _onLoadRequested(VouchersLoadRequested event, Emitter<VouchersState> emit) async {
@@ -43,5 +44,10 @@ class VouchersBloc extends Bloc<VouchersEvent, VouchersState> {
       (failure) => emit(VouchersError(failure.message, vouchers: current)),
       (_) => emit(VouchersLoaded(current.where((v) => !deletedIds.contains(v.id)).toList())),
     );
+  }
+
+  void _onGenerated(VouchersGenerated event, Emitter<VouchersState> emit) {
+    final current = state is VouchersLoaded ? (state as VouchersLoaded).vouchers : <Voucher>[];
+    emit(VouchersLoaded([...event.vouchers, ...current]));
   }
 }

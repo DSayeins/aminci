@@ -4,9 +4,8 @@ import 'package:aminci/core/models/voucher.dart';
 import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/theme/app_typography.dart';
-import 'package:aminci/core/utils/currency_formatter.dart';
 
-/// Ligne d'affichage d'un [voucher] — code, statut, consommation, prix.
+/// Ligne d'affichage d'un [voucher] — code, statut, consommation.
 /// Sélectionnable via [selected]/[onTap] (mode multi-sélection).
 class VoucherTile extends StatelessWidget {
   final Voucher voucher;
@@ -91,11 +90,6 @@ class VoucherTile extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const SizedBox(width: AppSpacing.gapMd),
-            Text(
-              CurrencyFormatter.format(voucher.price),
-              style: AppTypography.statValue.copyWith(color: AppColors.primary),
             ),
           ],
         ),

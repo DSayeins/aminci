@@ -5,6 +5,7 @@ import 'package:aminci/features/vouchers/data/datasources/voucher_remote_datasou
 import 'package:aminci/features/vouchers/data/repositories/vouchers_repository_impl.dart';
 import 'package:aminci/features/vouchers/domain/repository/vouchers_repository.dart';
 import 'package:aminci/features/vouchers/domain/usecases/delete_vouchers.dart';
+import 'package:aminci/features/vouchers/domain/usecases/generate_vouchers.dart';
 import 'package:aminci/features/vouchers/domain/usecases/get_vouchers_by_profile.dart';
 import 'package:aminci/features/vouchers/presentation/bloc/vouchers_bloc.dart';
 
@@ -15,6 +16,7 @@ void registerVouchersModule(GetIt sl) {
 
   sl.registerFactory(() => GetVouchersByProfile(sl()));
   sl.registerFactory(() => DeleteVouchers(sl()));
+  sl.registerFactory(() => GenerateVouchers(sl()));
 
   sl.registerFactory(() => VouchersBloc(getVouchersByProfile: sl(), deleteVouchers: sl()));
 }

@@ -184,24 +184,20 @@ class Voucher extends Equatable {
     );
   }
 
-  /// Quota de données formaté lisiblement (ex: `5.0 Go`, `500 Mo`).
-  String get limitBytesFmt {
-    if (limitBytesTotal == 0) return 'illimité';
-    final gb = limitBytesTotal / 1073741824;
-    if (gb >= 1) return '${gb.toStringAsFixed(1)} Go';
-    final mb = limitBytesTotal / 1048576;
+  /// Formate un volume en octets — au-delà de 1000 Mo, bascule en Go.
+  static String _formatBytes(int bytes) {
+    if (bytes == 0) return '0';
+    final mb = bytes / 1048576;
+    if (mb >= 1000) return '${(bytes / 1073741824).toStringAsFixed(1)} Go';
     if (mb >= 1) return '${mb.toStringAsFixed(0)} Mo';
-    return '$limitBytesTotal o';
+    return '$bytes o';
   }
 
+  /// Quota de données formaté lisiblement (ex: `5.0 Go`, `500 Mo`).
+  String get limitBytesFmt => limitBytesTotal == 0 ? 'illimité' : _formatBytes(limitBytesTotal);
+
   /// Données consommées formatées (download + upload).
-  String get bytesTotalFmt {
-    final total = bytesIn + bytesOut;
-    if (total == 0) return '0';
-    final mb = total / 1048576;
-    if (mb >= 1) return '${mb.toStringAsFixed(1)} Mo';
-    return '$total o';
-  }
+  String get bytesTotalFmt => _formatBytes(bytesIn + bytesOut);
 
   @override
   List<Object?> get props => [id, routerId, code, profileName, status, createdAt];

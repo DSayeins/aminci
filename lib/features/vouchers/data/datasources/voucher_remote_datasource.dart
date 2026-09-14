@@ -50,6 +50,45 @@ class VoucherRemoteDatasource {
     }
   }
 
+  /// Crée plusieurs comptes hotspot (`PUT /ip/hotspot/user`) — les vouchers —
+  /// pour [profile] sur [router]. Un seul client REST est réutilisé pour
+  /// toute la série. Lance [MikroTikException] au premier échec.
+  Future<List<Voucher>> createVouchers(
+    MikroTikRouter router,
+    HotspotProfile profile,
+    List<({String code, String password})> credentials, {
+    String? limitUptime,
+    int limitBytesTotal = 0,
+    String? comment,
+    String? server,
+  }) async {
+    final client = MikroTikRestClient(
+      ip: router.ip,
+      port: router.port,
+      username: router.username,
+      password: router.password,
+    );
+    try {
+      final created = <Voucher>[];
+      for (final credential in credentials) {
+        final body = <String, dynamic>{
+          'name': credential.code,
+          'password': credential.password,
+          'profile': profile.mikrotikName,
+          if (server != null && server.isNotEmpty) 'server': server,
+          if (limitUptime != null && limitUptime.isNotEmpty) 'limit-uptime': limitUptime,
+          if (limitBytesTotal > 0) 'limit-bytes-total': limitBytesTotal.toString(),
+          if (comment != null && comment.isNotEmpty) 'comment': comment,
+        };
+        final result = await client.put('/ip/hotspot/user', body);
+        created.add(Voucher.fromRestJson(result, routerId: router.id, profileName: profile.mikrotikName));
+      }
+      return created;
+    } finally {
+      client.close();
+    }
+  }
+
   /// Supprime plusieurs vouchers (`DELETE /ip/hotspot/user/{id}`) sur le
   /// routeur. Un seul client REST est réutilisé pour toute la série.
   /// Lance [MikroTikException] au premier échec.

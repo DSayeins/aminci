@@ -9,6 +9,7 @@ import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/features/vouchers/presentation/bloc/vouchers_bloc.dart';
 import 'package:aminci/features/vouchers/presentation/widgets/generate_vouchers_dialog.dart';
+import 'package:aminci/features/vouchers/presentation/widgets/voucher_print.dart';
 import 'package:aminci/features/vouchers/presentation/widgets/voucher_tile.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
 import 'package:aminci/shared/widgets/error_view.dart';
@@ -119,6 +120,14 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
                       onPressed: () => _selectAll(vouchers),
                     ),
                     IconButton(
+                      icon: const Icon(Icons.print_outlined),
+                      tooltip: 'Imprimer',
+                      onPressed: () => printVouchers(
+                        vouchers.where((v) => _selectedIds.contains(v.id)).toList(),
+                        widget.profile,
+                      ),
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.delete_outline_rounded),
                       tooltip: 'Supprimer',
                       onPressed: isBusy ? null : () => _confirmDelete(context, vouchers),
@@ -131,7 +140,7 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
                     Padding(
                       padding: const EdgeInsets.only(right: AppSpacing.paddingMd),
                       child: TextButton.icon(
-                        onPressed: () => showGenerateVouchersDialog(context),
+                        onPressed: () => showGenerateVouchersDialog(context, widget.router, widget.profile),
                         icon: const Icon(Icons.add_rounded, size: AppSpacing.iconMd),
                         label: const Text('Générer des vouchers'),
                       ),
@@ -160,7 +169,7 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
                   subtitle: 'Générez une première série de vouchers\npour ce profil.',
                   buttonLabel: 'Générer des vouchers',
                   buttonIcon: Icons.add_rounded,
-                  onAction: () => showGenerateVouchersDialog(context),
+                  onAction: () => showGenerateVouchersDialog(context, widget.router, widget.profile),
                 );
               }
 

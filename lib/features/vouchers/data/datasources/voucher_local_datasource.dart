@@ -23,6 +23,16 @@ class VoucherLocalDatasource {
     }
   }
 
+  /// Ajoute un voucher nouvellement généré au cache local.
+  Future<Voucher> insertVoucher(Voucher voucher) async {
+    try {
+      final id = await _db.insert('vouchers', voucher.toMap());
+      return voucher.copyWith(id: id);
+    } catch (e) {
+      throw StorageException('Impossible d\'ajouter le voucher : $e');
+    }
+  }
+
   /// Supprime les vouchers [ids] du cache local.
   Future<void> deleteMany(List<int> ids) async {
     if (ids.isEmpty) return;

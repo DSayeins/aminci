@@ -28,3 +28,16 @@ final class VouchersDeleteRequested extends VouchersEvent {
   @override
   List<Object> get props => [router, vouchers];
 }
+
+/// Ajoute des vouchers déjà générés (et persistés) à la liste en cours —
+/// la génération elle-même est appelée directement depuis le dialog (comme
+/// `GetAddressPools` pour les profils), cet event ne fait que rafraîchir
+/// l'écran sans nouvel appel réseau.
+final class VouchersGenerated extends VouchersEvent {
+  final List<Voucher> vouchers;
+
+  const VouchersGenerated(this.vouchers);
+
+  @override
+  List<Object> get props => [vouchers];
+}

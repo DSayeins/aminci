@@ -62,7 +62,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         final loaded = state as DashboardLoaded;
         final metrics = loaded.metrics;
 
-        return SingleChildScrollView(
+        return Padding(
           padding: AppSpacing.insetPage,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -117,9 +117,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ],
               ),
               const SizedBox(height: AppSpacing.gapLg),
-              RevenueTrendChart(points: metrics.revenueTrend),
-              const SizedBox(height: AppSpacing.gapLg),
               VoucherStatusBreakdown(metrics: metrics),
+              const SizedBox(height: AppSpacing.gapLg),
+              Expanded(child: RevenueTrendChart(points: metrics.revenueTrend)),
             ],
           ),
         );

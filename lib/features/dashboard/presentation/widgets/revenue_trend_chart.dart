@@ -31,7 +31,7 @@ class RevenueTrendChart extends StatelessWidget {
             style: AppTypography.sectionTitle.copyWith(color: AppColors.textPrimary),
           ),
           const SizedBox(height: AppSpacing.gapLg),
-          SizedBox(height: 200, child: points.isEmpty ? const SizedBox.shrink() : _Chart(points: points)),
+          Expanded(child: points.isEmpty ? const SizedBox.shrink() : _Chart(points: points)),
         ],
       ),
     );

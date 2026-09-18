@@ -56,10 +56,14 @@ class VoucherLocalDatasource {
 
   /// Synchronise le cache local avec [remoteVouchers] pour le profil
   /// [profileName] du routeur [routerId] : met à jour les vouchers déjà
-  /// connus en conservant leur `price`/`status`/`created_at`/`created_by`
-  /// locaux (absents de RouterOS), insère les nouveaux, et supprime ceux qui
+  /// connus en conservant leur `price`/`created_at`/`created_by` locaux
+  /// (absents de RouterOS), insère les nouveaux, et supprime ceux qui
   /// n'existent plus sur le routeur. Scoping strict au profil concerné pour
   /// ne pas toucher les vouchers des autres profils.
+  ///
+  /// `status` n'est **pas** préservé : il est recalculé à chaque sync depuis
+  /// [remoteVouchers] (voir `Voucher.resolveStatus`), pour refléter la
+  /// consommation réelle observée sur le routeur (pending → active → expired).
   Future<void> syncFromRemote(int routerId, String profileName, List<Voucher> remoteVouchers) async {
     try {
       await _db.transaction((txn) async {
@@ -82,7 +86,6 @@ class VoucherLocalDatasource {
               'vouchers',
               voucher.toMap()
                 ..['price'] = existing['price']
-                ..['status'] = existing['status']
                 ..['created_at'] = existing['created_at']
                 ..['created_by'] = existing['created_by'],
               where: 'id = ?',

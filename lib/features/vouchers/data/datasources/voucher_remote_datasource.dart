@@ -9,6 +9,9 @@ import 'package:aminci/features/vouchers/data/datasources/voucher_code_generator
 /// entre en collision avec un compte déjà existant sur le routeur.
 const int _maxNameCollisionRetries = 5;
 
+/// Nombre de créations envoyées en parallèle lors d'une génération en lot.
+const int _createConcurrency = 8;
+
 /// Accès REST MikroTik pour la feature vouchers.
 class VoucherRemoteDatasource {
   const VoucherRemoteDatasource();
@@ -56,9 +59,30 @@ class VoucherRemoteDatasource {
     }
   }
 
+  /// Liste tous les noms de compte hotspot déjà utilisés sur [router], tous
+  /// profils confondus — sert à écarter d'emblée les codes candidats en
+  /// collision, avant même de tenter une création (voir
+  /// `VouchersRepositoryImpl.generate`).
+  Future<Set<String>> getExistingUsernames(MikroTikRouter router) async {
+    final client = MikroTikRestClient(
+      ip: router.ip,
+      port: router.port,
+      username: router.username,
+      password: router.password,
+    );
+    try {
+      final rows = await client.get('/ip/hotspot/user');
+      return rows.map((row) => (row['name'] ?? '') as String).where((name) => name.isNotEmpty).toSet();
+    } finally {
+      client.close();
+    }
+  }
+
   /// Crée plusieurs comptes hotspot (`PUT /ip/hotspot/user`) — les vouchers —
-  /// pour [profile] sur [router]. Un seul client REST est réutilisé pour
-  /// toute la série. Lance [MikroTikException] au premier échec.
+  /// pour [profile] sur [router]. Envoie les créations par lots de
+  /// [_createConcurrency] requêtes en parallèle (un seul client REST est
+  /// réutilisé pour toute la série). Lance [MikroTikException] au premier
+  /// échec définitif.
   Future<List<Voucher>> createVouchers(
     MikroTikRouter router,
     HotspotProfile profile,
@@ -76,39 +100,67 @@ class VoucherRemoteDatasource {
     );
     try {
       final created = <Voucher>[];
-      for (final credential in credentials) {
-        var code = credential.code;
-        var password = credential.password;
-
-        for (var attempt = 0; ; attempt++) {
-          final body = <String, dynamic>{
-            'name': code,
-            'password': password,
-            'profile': profile.mikrotikName,
-            if (server != null && server.isNotEmpty) 'server': server,
-            if (limitUptime != null && limitUptime.isNotEmpty) 'limit-uptime': limitUptime,
-            if (limitBytesTotal > 0) 'limit-bytes-total': limitBytesTotal.toString(),
-            if (comment != null && comment.isNotEmpty) 'comment': comment,
-          };
-          try {
-            final result = await client.put('/ip/hotspot/user', body);
-            created.add(Voucher.fromRestJson(result, routerId: router.id, profileName: profile.mikrotikName));
-            break;
-          } on MikroTikException catch (e) {
-            // Le code généré aléatoirement entre en collision avec un compte
-            // déjà présent sur le routeur (ex: ancien voucher, autre profil).
-            // On retente avec un nouveau code plutôt que de faire échouer
-            // tout le lot déjà créé.
-            final isNameCollision = e.message.toLowerCase().contains('already have a user with this name');
-            if (!isNameCollision || attempt >= _maxNameCollisionRetries) rethrow;
-            code = VoucherCodeGenerator.code();
-            password = VoucherCodeGenerator.password();
-          }
-        }
+      for (var start = 0; start < credentials.length; start += _createConcurrency) {
+        final end = (start + _createConcurrency).clamp(0, credentials.length);
+        final batch = credentials.sublist(start, end);
+        final results = await Future.wait(
+          batch.map(
+            (credential) => _createOne(
+              client,
+              router,
+              profile,
+              credential,
+              limitUptime: limitUptime,
+              limitBytesTotal: limitBytesTotal,
+              comment: comment,
+              server: server,
+            ),
+          ),
+        );
+        created.addAll(results);
       }
       return created;
     } finally {
       client.close();
+    }
+  }
+
+  Future<Voucher> _createOne(
+    MikroTikRestClient client,
+    MikroTikRouter router,
+    HotspotProfile profile,
+    ({String code, String password}) credential, {
+    String? limitUptime,
+    int limitBytesTotal = 0,
+    String? comment,
+    String? server,
+  }) async {
+    var code = credential.code;
+    var password = credential.password;
+
+    for (var attempt = 0; ; attempt++) {
+      final body = <String, dynamic>{
+        'name': code,
+        'password': password,
+        'profile': profile.mikrotikName,
+        if (server != null && server.isNotEmpty) 'server': server,
+        if (limitUptime != null && limitUptime.isNotEmpty) 'limit-uptime': limitUptime,
+        if (limitBytesTotal > 0) 'limit-bytes-total': limitBytesTotal.toString(),
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      };
+      try {
+        final result = await client.put('/ip/hotspot/user', body);
+        return Voucher.fromRestJson(result, routerId: router.id, profileName: profile.mikrotikName);
+      } on MikroTikException catch (e) {
+        // Le code généré entre en collision avec un compte déjà présent sur
+        // le routeur — malgré la pré-vérification côté client, un autre
+        // processus a pu créer ce nom entre-temps. On retente avec un
+        // nouveau code plutôt que de faire échouer tout le lot.
+        final isNameCollision = e.message.toLowerCase().contains('already have a user with this name');
+        if (!isNameCollision || attempt >= _maxNameCollisionRetries) rethrow;
+        code = VoucherCodeGenerator.code();
+        password = VoucherCodeGenerator.password();
+      }
     }
   }
 

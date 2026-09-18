@@ -64,9 +64,16 @@ class VouchersRepositoryImpl implements VouchersRepository {
     String? server,
   }) {
     return ErrorMapper.guard(() async {
+      // Récupéré une seule fois pour tout le lot — évite d'envoyer des
+      // créations vouées à échouer sur un nom déjà pris (voir
+      // VoucherRemoteDatasource.createVouchers pour le filet de sécurité en
+      // cas de collision malgré tout, ex: nom créé entre-temps par ailleurs).
+      final existingNames = await _remote.getExistingUsernames(router);
+
       final codes = <String>{};
       while (codes.length < quantity) {
-        codes.add(VoucherCodeGenerator.code());
+        final candidate = VoucherCodeGenerator.code();
+        if (!existingNames.contains(candidate)) codes.add(candidate);
       }
       final credentials = codes.map((code) => (code: code, password: VoucherCodeGenerator.password())).toList();
 
@@ -93,7 +100,14 @@ class VouchersRepositoryImpl implements VouchersRepository {
               password: v.password,
               profileName: profile.mikrotikName,
               price: price,
-              status: VoucherStatus.pending,
+              status: Voucher.resolveStatus(
+                disabled: v.disabled,
+                uptime: v.uptime,
+                bytesIn: v.bytesIn,
+                bytesOut: v.bytesOut,
+                limitUptime: limitUptime,
+                limitBytesTotal: limitBytesTotal,
+              ),
               createdAt: now,
               createdBy: createdBy,
               mikrotikId: v.mikrotikId,

@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:aminci/core/utils/mikrotik_duration.dart';
+
 enum VoucherStatus { pending, active, expired }
 
 class Voucher extends Equatable {
@@ -129,16 +131,25 @@ class Voucher extends Equatable {
 
   /// Parse une ligne JSON REST MikroTik (`/ip/hotspot/user/print`).
   ///
-  /// `price`/`status`/`createdAt`/`createdBy` n'existent pas côté RouterOS —
-  /// laissés à leur défaut, à préserver lors d'une resynchronisation (voir
+  /// `price`/`createdAt`/`createdBy` n'existent pas côté RouterOS — laissés à
+  /// leur défaut, à préserver lors d'une resynchronisation (voir
   /// `VoucherLocalDatasource.syncFromRemote`). [profileName] est déjà résolu
   /// (le champ brut `profile` de RouterOS peut être un nom ou un identifiant
-  /// interne selon l'état du profil référencé).
+  /// interne selon l'état du profil référencé). `status` est recalculé à
+  /// chaque synchronisation à partir de la consommation réelle du voucher
+  /// (voir [resolveStatus]).
   factory Voucher.fromRestJson(
     Map<String, dynamic> map, {
     required int routerId,
     required String profileName,
   }) {
+    final disabled = map['disabled'] == true || map['disabled'] == 'true';
+    final limitUptime = map['limit-uptime'] as String?;
+    final limitBytesTotal = int.tryParse('${map['limit-bytes-total'] ?? 0}') ?? 0;
+    final uptime = map['uptime'] as String?;
+    final bytesIn = int.tryParse('${map['bytes-in'] ?? 0}') ?? 0;
+    final bytesOut = int.tryParse('${map['bytes-out'] ?? 0}') ?? 0;
+
     return Voucher(
       id: 0,
       routerId: routerId,
@@ -146,19 +157,53 @@ class Voucher extends Equatable {
       password: (map['password'] ?? '') as String,
       profileName: profileName,
       price: 0,
-      status: VoucherStatus.pending,
+      status: resolveStatus(
+        disabled: disabled,
+        uptime: uptime,
+        bytesIn: bytesIn,
+        bytesOut: bytesOut,
+        limitUptime: limitUptime,
+        limitBytesTotal: limitBytesTotal,
+      ),
       createdAt: DateTime.now(),
       createdBy: '',
       mikrotikId: map['.id'] as String?,
       server: map['server'] as String?,
       comment: map['comment'] as String?,
-      limitUptime: map['limit-uptime'] as String?,
-      limitBytesTotal: int.tryParse('${map['limit-bytes-total'] ?? 0}') ?? 0,
-      uptime: map['uptime'] as String?,
-      bytesIn: int.tryParse('${map['bytes-in'] ?? 0}') ?? 0,
-      bytesOut: int.tryParse('${map['bytes-out'] ?? 0}') ?? 0,
-      disabled: map['disabled'] == true || map['disabled'] == 'true',
+      limitUptime: limitUptime,
+      limitBytesTotal: limitBytesTotal,
+      uptime: uptime,
+      bytesIn: bytesIn,
+      bytesOut: bytesOut,
+      disabled: disabled,
     );
+  }
+
+  /// Déduit le statut d'un voucher à partir de sa consommation réelle sur le
+  /// routeur : `expired` si désactivé ou si le quota (durée ou données) est
+  /// atteint, `active` s'il a déjà servi à se connecter, `pending` sinon
+  /// (jamais utilisé).
+  static VoucherStatus resolveStatus({
+    required bool disabled,
+    required String? uptime,
+    required int bytesIn,
+    required int bytesOut,
+    required String? limitUptime,
+    required int limitBytesTotal,
+  }) {
+    if (disabled) return VoucherStatus.expired;
+
+    final consumedSeconds = MikroTikDuration.parseSeconds(uptime);
+    final consumedBytes = bytesIn + bytesOut;
+
+    final limitSeconds = MikroTikDuration.parseSeconds(limitUptime);
+    final uptimeExhausted = limitSeconds > 0 && consumedSeconds >= limitSeconds;
+    final dataExhausted = limitBytesTotal > 0 && consumedBytes >= limitBytesTotal;
+    if (uptimeExhausted || dataExhausted) return VoucherStatus.expired;
+
+    if (consumedSeconds > 0 || consumedBytes > 0) return VoucherStatus.active;
+
+    return VoucherStatus.pending;
   }
 
   factory Voucher.fromMap(Map<String, dynamic> map) {

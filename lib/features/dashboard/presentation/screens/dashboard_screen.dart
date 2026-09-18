@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:aminci/core/models/router.dart';
+import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/utils/currency_formatter.dart';
 import 'package:aminci/features/dashboard/presentation/bloc/dashboard_bloc.dart';
+import 'package:aminci/features/dashboard/presentation/widgets/revenue_trend_chart.dart';
 import 'package:aminci/features/dashboard/presentation/widgets/voucher_status_breakdown.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
@@ -65,43 +67,57 @@ class _DashboardScreenState extends State<DashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              GridView(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                  maxCrossAxisExtent: 260,
-                  mainAxisSpacing: AppSpacing.gapMd,
-                  crossAxisSpacing: AppSpacing.gapMd,
-                  childAspectRatio: 1.3,
-                ),
+              Row(
                 children: [
-                  StatCard(
-                    icon: Icons.payments_rounded,
-                    value: CurrencyFormatter.format(metrics.revenueToday),
-                    label: 'Chiffre d\'affaires — aujourd\'hui',
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.payments_rounded,
+                      value: CurrencyFormatter.format(metrics.revenueToday),
+                      label: 'Chiffre d\'affaires — aujourd\'hui',
+                    ),
                   ),
-                  StatCard(
-                    icon: Icons.calendar_view_week_rounded,
-                    value: CurrencyFormatter.format(metrics.revenueWeek),
-                    label: 'Chiffre d\'affaires — cette semaine',
+                  const SizedBox(width: AppSpacing.gapMd),
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.calendar_view_week_rounded,
+                      value: CurrencyFormatter.format(metrics.revenueWeek),
+                      label: 'Chiffre d\'affaires — cette semaine',
+                    ),
                   ),
-                  StatCard(
-                    icon: Icons.calendar_month_rounded,
-                    value: CurrencyFormatter.format(metrics.revenueMonth),
-                    label: 'Chiffre d\'affaires — ce mois',
-                  ),
-                  StatCard(
-                    icon: Icons.confirmation_number_rounded,
-                    value: '${metrics.vouchersTotal}',
-                    label: 'Vouchers générés',
-                  ),
-                  StatCard(
-                    icon: Icons.sensors_rounded,
-                    value: '${loaded.activeSessionsCount}',
-                    label: 'Sessions actives',
+                  const SizedBox(width: AppSpacing.gapMd),
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.calendar_month_rounded,
+                      value: CurrencyFormatter.format(metrics.revenueMonth),
+                      label: 'Chiffre d\'affaires — ce mois',
+                    ),
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.gapMd),
+              Row(
+                children: [
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.confirmation_number_rounded,
+                      value: '${metrics.vouchersTotal}',
+                      label: 'Vouchers générés',
+                      accentColor: AppColors.statusPending,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.gapMd),
+                  Expanded(
+                    child: StatCard(
+                      icon: Icons.sensors_rounded,
+                      value: '${loaded.activeSessionsCount}',
+                      label: 'Sessions actives',
+                      accentColor: AppColors.statusActive,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.gapLg),
+              RevenueTrendChart(points: metrics.revenueTrend),
               const SizedBox(height: AppSpacing.gapLg),
               VoucherStatusBreakdown(metrics: metrics),
             ],

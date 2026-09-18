@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 
+import 'package:aminci/core/utils/byte_formatter.dart';
 import 'package:aminci/core/utils/mikrotik_duration.dart';
 
 enum VoucherStatus { pending, active, expired }
@@ -229,20 +230,11 @@ class Voucher extends Equatable {
     );
   }
 
-  /// Formate un volume en octets — au-delà de 1000 Mo, bascule en Go.
-  static String _formatBytes(int bytes) {
-    if (bytes == 0) return '0';
-    final mb = bytes / 1048576;
-    if (mb >= 1000) return '${(bytes / 1073741824).toStringAsFixed(1)} Go';
-    if (mb >= 1) return '${mb.toStringAsFixed(0)} Mo';
-    return '$bytes o';
-  }
-
   /// Quota de données formaté lisiblement (ex: `5.0 Go`, `500 Mo`).
-  String get limitBytesFmt => limitBytesTotal == 0 ? 'illimité' : _formatBytes(limitBytesTotal);
+  String get limitBytesFmt => limitBytesTotal == 0 ? 'illimité' : ByteFormatter.format(limitBytesTotal);
 
   /// Données consommées formatées (download + upload).
-  String get bytesTotalFmt => _formatBytes(bytesIn + bytesOut);
+  String get bytesTotalFmt => ByteFormatter.format(bytesIn + bytesOut);
 
   @override
   List<Object?> get props => [id, routerId, code, profileName, status, createdAt];

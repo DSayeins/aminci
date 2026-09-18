@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:aminci/core/di/modules/active_sessions_module.dart';
 import 'package:aminci/core/di/modules/core_module.dart';
 import 'package:aminci/core/di/modules/hotspot_module.dart';
 import 'package:aminci/core/di/modules/login_module.dart';
@@ -26,4 +27,5 @@ Future<void> setupServiceLocator() async {
   registerHotspotModule(sl);
   registerProfilesModule(sl);
   registerVouchersModule(sl);
+  registerActiveSessionsModule(sl);
 }

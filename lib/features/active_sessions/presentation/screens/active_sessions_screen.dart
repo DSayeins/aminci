@@ -18,10 +18,17 @@ class ActiveSessionsScreen extends StatefulWidget {
 
 class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
   MikroTikRouter? _router;
+  // Capturé dans initState plutôt que relu dans dispose() : si cet écran est
+  // démonté en même temps que ses ancêtres (ex. déconnexion qui remplace tout
+  // le ShellRoute), l'élément n'est plus assez stable en dispose() pour
+  // remonter vers le Provider — voir "Looking up a deactivated widget's
+  // ancestor is unsafe".
+  late final ActiveSessionsBloc _activeSessionsBloc;
 
   @override
   void initState() {
     super.initState();
+    _activeSessionsBloc = context.read<ActiveSessionsBloc>();
     final state = context.read<RoutersBloc>().state;
     _router = state is RoutersLoaded ? state.selectedRouter : null;
     _load();
@@ -29,7 +36,7 @@ class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
 
   void _load() {
     final router = _router;
-    if (router != null) context.read<ActiveSessionsBloc>().add(ActiveSessionsLoadRequested(router));
+    if (router != null) _activeSessionsBloc.add(ActiveSessionsLoadRequested(router));
   }
 
   @override
@@ -37,7 +44,7 @@ class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
     // Le bloc est partagé (registré globalement) — on arrête explicitement
     // le rafraîchissement automatique en quittant l'écran pour ne pas
     // continuer à interroger le routeur en arrière-plan.
-    context.read<ActiveSessionsBloc>().add(const ActiveSessionsStopped());
+    _activeSessionsBloc.add(const ActiveSessionsStopped());
     super.dispose();
   }
 

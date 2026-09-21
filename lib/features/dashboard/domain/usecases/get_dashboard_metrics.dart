@@ -8,5 +8,6 @@ class GetDashboardMetrics {
   final DashboardRepository _repository;
   const GetDashboardMetrics(this._repository);
 
-  Future<Either<Failure, DashboardMetrics>> call(int routerId) => _repository.getMetrics(routerId);
+  Future<Either<Failure, DashboardMetrics>> call(int routerId, {String? hotspotName}) =>
+      _repository.getMetrics(routerId, hotspotName: hotspotName);
 }

@@ -8,6 +8,7 @@ import 'package:aminci/core/utils/currency_formatter.dart';
 import 'package:aminci/features/dashboard/presentation/bloc/dashboard_bloc.dart';
 import 'package:aminci/features/dashboard/presentation/widgets/revenue_trend_chart.dart';
 import 'package:aminci/features/dashboard/presentation/widgets/voucher_status_breakdown.dart';
+import 'package:aminci/features/hotspot/presentation/bloc/hotspot_bloc.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
 import 'package:aminci/shared/widgets/error_view.dart';
@@ -22,18 +23,23 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   MikroTikRouter? _router;
+  String? _hotspotName;
 
   @override
   void initState() {
     super.initState();
-    final state = context.read<RoutersBloc>().state;
-    _router = state is RoutersLoaded ? state.selectedRouter : null;
+    final routersState = context.read<RoutersBloc>().state;
+    _router = routersState is RoutersLoaded ? routersState.selectedRouter : null;
+    final hotspotState = context.read<HotspotBloc>().state;
+    _hotspotName = hotspotState is HotspotLoaded ? hotspotState.selected?.name : null;
     _load();
   }
 
   void _load() {
     final router = _router;
-    if (router != null) context.read<DashboardBloc>().add(DashboardLoadRequested(router));
+    if (router != null) {
+      context.read<DashboardBloc>().add(DashboardLoadRequested(router, hotspotName: _hotspotName));
+    }
   }
 
   @override
@@ -46,6 +52,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         icon: Icons.router_rounded,
         title: 'Aucun routeur sélectionné',
         subtitle: 'Choisissez un routeur pour voir le dashboard.',
+      );
+    }
+
+    if (_hotspotName == null) {
+      // Le flux normal (/routers → /hotspots → /dashboard) garantit un
+      // hotspot sélectionné avant d'atteindre cette page — filet de sécurité
+      // si jamais ce n'est pas le cas.
+      return const EmptyState(
+        icon: Icons.wifi_tethering_rounded,
+        title: 'Aucun hotspot sélectionné',
+        subtitle: 'Choisissez un hotspot pour voir le dashboard.',
       );
     }
 

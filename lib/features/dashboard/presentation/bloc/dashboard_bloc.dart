@@ -25,7 +25,7 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   Future<void> _onLoadRequested(DashboardLoadRequested event, Emitter<DashboardState> emit) async {
     emit(const DashboardLoading());
 
-    final metricsResult = await _getDashboardMetrics(event.router.id);
+    final metricsResult = await _getDashboardMetrics(event.router.id, hotspotName: event.hotspotName);
     // Les sessions actives sont une donnée live secondaire — un échec de ce
     // fetch ne doit pas empêcher l'affichage des métriques principales.
     final activeSessionsResult = await _getActiveSessions(event.router);

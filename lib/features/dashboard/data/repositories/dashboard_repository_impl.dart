@@ -12,9 +12,9 @@ class DashboardRepositoryImpl implements DashboardRepository {
   const DashboardRepositoryImpl(this._local);
 
   @override
-  Future<Either<Failure, DashboardMetrics>> getMetrics(int routerId) {
+  Future<Either<Failure, DashboardMetrics>> getMetrics(int routerId, {String? hotspotName}) {
     return ErrorMapper.guard(
-      () => _local.getMetrics(routerId),
+      () => _local.getMetrics(routerId, hotspotName: hotspotName),
       fallbackMessage: 'Impossible de charger les métriques du dashboard',
     );
   }

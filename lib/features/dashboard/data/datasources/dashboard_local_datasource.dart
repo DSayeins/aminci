@@ -12,7 +12,7 @@ class DashboardLocalDatasource {
 
   const DashboardLocalDatasource(this._db);
 
-  Future<DashboardMetrics> getMetrics(int routerId) async {
+  Future<DashboardMetrics> getMetrics(int routerId, {String? hotspotName}) async {
     try {
       final now = DateTime.now();
       final startOfToday = DateTime(now.year, now.month, now.day);
@@ -20,14 +20,14 @@ class DashboardLocalDatasource {
       final startOfWeek = startOfToday.subtract(Duration(days: startOfToday.weekday - 1));
       final startOfMonth = DateTime(now.year, now.month, 1);
 
-      final revenueToday = await _sumPriceSince(routerId, startOfToday);
-      final revenueWeek = await _sumPriceSince(routerId, startOfWeek);
-      final revenueMonth = await _sumPriceSince(routerId, startOfMonth);
-      final revenueTrend = await _getRevenueTrend(routerId, startOfToday);
+      final revenueToday = await _sumPriceSince(routerId, startOfToday, hotspotName);
+      final revenueWeek = await _sumPriceSince(routerId, startOfWeek, hotspotName);
+      final revenueMonth = await _sumPriceSince(routerId, startOfMonth, hotspotName);
+      final revenueTrend = await _getRevenueTrend(routerId, startOfToday, hotspotName);
 
       final statusRows = await _db.rawQuery(
-        'SELECT status, COUNT(*) as count FROM vouchers WHERE router_id = ? GROUP BY status',
-        [routerId],
+        'SELECT status, COUNT(*) as count FROM vouchers WHERE router_id = ? AND server = ? GROUP BY status',
+        [routerId, hotspotName],
       );
       var pending = 0;
       var active = 0;
@@ -58,10 +58,10 @@ class DashboardLocalDatasource {
     }
   }
 
-  Future<double> _sumPriceSince(int routerId, DateTime since) async {
+  Future<double> _sumPriceSince(int routerId, DateTime since, String? hotspotName) async {
     final rows = await _db.rawQuery(
-      'SELECT COALESCE(SUM(price), 0) as total FROM vouchers WHERE router_id = ? AND created_at >= ?',
-      [routerId, since.millisecondsSinceEpoch ~/ 1000],
+      'SELECT COALESCE(SUM(price), 0) as total FROM vouchers WHERE router_id = ? AND server = ? AND created_at >= ?',
+      [routerId, hotspotName, since.millisecondsSinceEpoch ~/ 1000],
     );
     return ((rows.first['total'] as num?) ?? 0).toDouble();
   }
@@ -69,11 +69,11 @@ class DashboardLocalDatasource {
   /// Chiffre d'affaires jour par jour sur les [_trendDays] derniers jours
   /// (bornes incluses), [startOfToday] inclus, avec `0` pour les jours sans
   /// vente.
-  Future<List<RevenuePoint>> _getRevenueTrend(int routerId, DateTime startOfToday) async {
+  Future<List<RevenuePoint>> _getRevenueTrend(int routerId, DateTime startOfToday, String? hotspotName) async {
     final startOfTrend = startOfToday.subtract(const Duration(days: _trendDays - 1));
     final rows = await _db.rawQuery(
-      'SELECT created_at, price FROM vouchers WHERE router_id = ? AND created_at >= ?',
-      [routerId, startOfTrend.millisecondsSinceEpoch ~/ 1000],
+      'SELECT created_at, price FROM vouchers WHERE router_id = ? AND server = ? AND created_at >= ?',
+      [routerId, hotspotName, startOfTrend.millisecondsSinceEpoch ~/ 1000],
     );
 
     final byDay = <DateTime, double>{};

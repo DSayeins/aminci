@@ -82,7 +82,7 @@ class VoucherTile extends StatelessWidget {
                   const SizedBox(height: AppSpacing.gapXs),
                   Text(
                     [
-                      if (voucher.limitUptime != null && voucher.limitUptime!.isNotEmpty) voucher.limitUptime,
+                      if (voucher.remainingUptimeFmt != null) '${voucher.remainingUptimeFmt} restant',
                       '${voucher.bytesTotalFmt} / ${voucher.limitBytesFmt}',
                     ].join('  •  '),
                     style: AppTypography.bodySm.copyWith(color: AppColors.textTertiary),

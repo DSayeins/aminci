@@ -9,6 +9,7 @@ import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/features/vouchers/presentation/bloc/vouchers_bloc.dart';
 import 'package:aminci/features/vouchers/presentation/widgets/generate_vouchers_dialog.dart';
+import 'package:aminci/features/vouchers/presentation/widgets/voucher_filter_bar.dart';
 import 'package:aminci/features/vouchers/presentation/widgets/voucher_print.dart';
 import 'package:aminci/features/vouchers/presentation/widgets/voucher_tile.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
@@ -42,8 +43,25 @@ class ProfileVouchersScreen extends StatefulWidget {
 
 class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
   final Set<int> _selectedIds = {};
+  final _searchController = TextEditingController();
+  VoucherStatus? _statusFilter;
+  String _query = '';
 
   bool get _isSelecting => _selectedIds.isNotEmpty;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Voucher> _applyFilters(List<Voucher> vouchers) {
+    return vouchers.where((v) {
+      final matchesStatus = _statusFilter == null || v.status == _statusFilter;
+      final matchesQuery = _query.isEmpty || v.code.toLowerCase().contains(_query.toLowerCase());
+      return matchesStatus && matchesQuery;
+    }).toList();
+  }
 
   void _toggle(Voucher voucher) {
     setState(() {
@@ -106,6 +124,7 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
         final vouchers = state is VouchersLoaded
             ? state.vouchers
             : (state is VouchersError ? state.vouchers : const <Voucher>[]);
+        final filtered = _applyFilters(vouchers);
         final isBusy = state is VouchersLoaded && state.isBusy;
 
         return Scaffold(
@@ -117,7 +136,7 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
                     IconButton(
                       icon: const Icon(Icons.select_all_rounded),
                       tooltip: 'Tout sélectionner',
-                      onPressed: () => _selectAll(vouchers),
+                      onPressed: () => _selectAll(filtered),
                     ),
                     IconButton(
                       icon: const Icon(Icons.print_outlined),
@@ -173,19 +192,37 @@ class _ProfileVouchersScreenState extends State<ProfileVouchersScreen> {
                 );
               }
 
-              return ListView.separated(
-                padding: AppSpacing.insetPage,
-                itemCount: vouchers.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapSm),
-                itemBuilder: (context, index) {
-                  final voucher = vouchers[index];
-                  return VoucherTile(
-                    voucher: voucher,
-                    selected: _selectedIds.contains(voucher.id),
-                    onTap: () => _toggle(voucher),
-                    onLongPress: () => _toggle(voucher),
-                  );
-                },
+              return Column(
+                children: [
+                  VoucherFilterBar(
+                    searchController: _searchController,
+                    statusFilter: _statusFilter,
+                    onQueryChanged: (value) => setState(() => _query = value),
+                    onStatusChanged: (status) => setState(() => _statusFilter = status),
+                  ),
+                  Expanded(
+                    child: filtered.isEmpty
+                        ? const EmptyState(
+                            icon: Icons.search_off_rounded,
+                            title: 'Aucun résultat',
+                            subtitle: 'Aucun voucher ne correspond à ce filtre.',
+                          )
+                        : ListView.separated(
+                            padding: AppSpacing.insetPage,
+                            itemCount: filtered.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapSm),
+                            itemBuilder: (context, index) {
+                              final voucher = filtered[index];
+                              return VoucherTile(
+                                voucher: voucher,
+                                selected: _selectedIds.contains(voucher.id),
+                                onTap: () => _toggle(voucher),
+                                onLongPress: () => _toggle(voucher),
+                              );
+                            },
+                          ),
+                  ),
+                ],
               );
             },
           ),

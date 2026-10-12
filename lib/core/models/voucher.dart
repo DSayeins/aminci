@@ -236,6 +236,18 @@ class Voucher extends Equatable {
   /// Données consommées formatées (download + upload).
   String get bytesTotalFmt => ByteFormatter.format(bytesIn + bytesOut);
 
+  /// Temps restant avant épuisement du quota de durée, au format MikroTik
+  /// compact (ex: `1d2h30m`). `null` si aucun quota de durée n'est défini
+  /// (voucher illimité en durée).
+  String? get remainingUptimeFmt {
+    final limitSeconds = MikroTikDuration.parseSeconds(limitUptime);
+    if (limitSeconds == 0) return null;
+
+    final consumedSeconds = MikroTikDuration.parseSeconds(uptime);
+    final remainingSeconds = (limitSeconds - consumedSeconds).clamp(0, limitSeconds);
+    return MikroTikDuration.formatSeconds(remainingSeconds);
+  }
+
   @override
   List<Object?> get props => [id, routerId, code, profileName, status, createdAt];
 }

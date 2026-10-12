@@ -25,4 +25,29 @@ abstract final class MikroTikDuration {
     }
     return totalSeconds;
   }
+
+  /// Formate une durée en secondes au format MikroTik compact (ex: `1d2h30m`).
+  /// Les unités nulles sont omises ; `0s` si [totalSeconds] est nul ou négatif.
+  static String formatSeconds(int totalSeconds) {
+    if (totalSeconds <= 0) return '0s';
+
+    var remaining = totalSeconds;
+    final weeks = remaining ~/ 604800;
+    remaining %= 604800;
+    final days = remaining ~/ 86400;
+    remaining %= 86400;
+    final hours = remaining ~/ 3600;
+    remaining %= 3600;
+    final minutes = remaining ~/ 60;
+    final seconds = remaining % 60;
+
+    final parts = <String>[
+      if (weeks > 0) '${weeks}w',
+      if (days > 0) '${days}d',
+      if (hours > 0) '${hours}h',
+      if (minutes > 0) '${minutes}m',
+      if (seconds > 0) '${seconds}s',
+    ];
+    return parts.join();
+  }
 }

@@ -6,13 +6,12 @@ import 'package:aminci/core/router/routes.dart';
 import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 import 'package:aminci/core/theme/app_typography.dart';
-import 'package:aminci/features/hotspot/presentation/bloc/hotspot_bloc.dart';
 import 'package:aminci/features/login/presentation/bloc/login_bloc.dart';
 import 'package:aminci/features/logout/presentation/bloc/logout_bloc.dart';
-import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 
-/// Hiérarchie : Identité (logo) → Navigation → Contexte (routeur/hotspot
-/// actifs) → Compte (utilisateur + déconnexion).
+/// Hiérarchie : Identité (logo) → Navigation → Compte (utilisateur +
+/// déconnexion). Le contexte routeur/hotspot est porté par le fil d'Ariane de
+/// la topbar.
 class AppSidebar extends StatelessWidget {
   final List<Routes> availablePages;
   final Routes? currentRoute;
@@ -31,8 +30,6 @@ class AppSidebar extends StatelessWidget {
           Expanded(
             child: _SidebarNav(pages: availablePages, current: currentRoute),
           ),
-          const Divider(height: 1),
-          _ContextSwitcher(),
           const Divider(height: 1),
           _AccountFooter(),
         ],
@@ -128,109 +125,6 @@ class _NavItem extends StatelessWidget {
                 ],
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// -----------------------------------------------------------------------------
-// Contexte de travail — routeur + hotspot actifs
-// -----------------------------------------------------------------------------
-
-class _ContextSwitcher extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gapSm, vertical: AppSpacing.gapSm),
-      child: Container(
-        decoration: BoxDecoration(color: AppColors.bgSubtle, borderRadius: AppSpacing.borderSm),
-        child: Column(
-          children: [
-            BlocBuilder<RoutersBloc, RoutersState>(
-              buildWhen: (prev, curr) {
-                final prevName = prev is RoutersLoaded ? prev.selectedRouter?.name : null;
-                final currName = curr is RoutersLoaded ? curr.selectedRouter?.name : null;
-                return prevName != currName;
-              },
-              builder: (context, state) {
-                final selected = state is RoutersLoaded ? state.selectedRouter : null;
-                return _ContextRow(
-                  icon: Icons.router_rounded,
-                  title: selected?.name ?? 'Aucun routeur',
-                  subtitle: selected != null ? '${selected.ip}:${selected.port}' : 'Choisir un routeur',
-                  onTap: () => context.go('/routers'),
-                );
-              },
-            ),
-            const Divider(height: 1, indent: AppSpacing.navItemPaddingH, endIndent: AppSpacing.navItemPaddingH),
-            BlocBuilder<HotspotBloc, HotspotState>(
-              buildWhen: (prev, curr) {
-                final prevName = prev is HotspotLoaded ? prev.selected?.name : null;
-                final currName = curr is HotspotLoaded ? curr.selected?.name : null;
-                return prevName != currName;
-              },
-              builder: (context, state) {
-                final selected = state is HotspotLoaded ? state.selected : null;
-                return _ContextRow(
-                  icon: Icons.wifi_tethering_rounded,
-                  title: selected?.name ?? 'Aucun hotspot',
-                  subtitle: selected?.interface ?? 'Choisir un hotspot',
-                  onTap: () => context.go('/hotspots'),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ContextRow extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  const _ContextRow({required this.icon, required this.title, required this.subtitle, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      borderRadius: AppSpacing.borderSm,
-      child: InkWell(
-        onTap: onTap,
-        mouseCursor: SystemMouseCursors.click,
-        hoverColor: AppColors.primaryLight,
-        borderRadius: AppSpacing.borderSm,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.navItemPaddingH, vertical: AppSpacing.gapSm),
-          child: Row(
-            children: [
-              Icon(icon, size: AppSpacing.navIconSize, color: AppColors.textTertiary),
-              const SizedBox(width: AppSpacing.gapSm),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: AppTypography.navItem.copyWith(color: AppColors.textSecondary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    Text(
-                      subtitle,
-                      style: AppTypography.techData.copyWith(color: AppColors.textTertiary),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
-              ),
-              Icon(Icons.swap_horiz_rounded, size: AppSpacing.iconSm, color: AppColors.textTertiary),
-            ],
           ),
         ),
       ),

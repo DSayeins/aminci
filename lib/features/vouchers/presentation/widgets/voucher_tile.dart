@@ -88,6 +88,23 @@ class VoucherTile extends StatelessWidget {
                     style: AppTypography.bodySm.copyWith(color: AppColors.textTertiary),
                     overflow: TextOverflow.ellipsis,
                   ),
+                  if (voucher.comment != null && voucher.comment!.isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.gapXs),
+                    Row(
+                      children: [
+                        const Icon(Icons.chat_bubble_outline_rounded, size: AppSpacing.iconSm, color: AppColors.textTertiary),
+                        const SizedBox(width: AppSpacing.gapXs),
+                        Expanded(
+                          child: Text(
+                            voucher.comment!,
+                            style: AppTypography.bodySm.copyWith(color: AppColors.textSecondary),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
               ),
             ),

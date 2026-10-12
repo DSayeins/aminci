@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:aminci/core/models/voucher.dart';
-import 'package:aminci/core/theme/app_colors.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
 
 /// Barre de filtres de la liste des vouchers : recherche par code + filtre
@@ -39,15 +38,13 @@ class VoucherFilterBar extends StatelessWidget {
       child: Row(
         children: [
           SizedBox(
-            width: 280,
+            width: AppSpacing.searchFieldWidth,
             child: TextField(
               controller: searchController,
               onChanged: onQueryChanged,
               decoration: InputDecoration(
                 hintText: 'Rechercher un code…',
                 prefixIcon: const Icon(Icons.search_rounded, size: AppSpacing.iconMd),
-                fillColor: AppColors.bgSurface,
-                isDense: true,
                 suffixIcon: searchController.text.isEmpty
                     ? null
                     : IconButton(

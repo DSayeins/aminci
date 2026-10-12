@@ -70,6 +70,7 @@ abstract final class AppSpacing {
   static const double inputHeight = 36;
   static const double inputPaddingH = x3; // 12px
   static const double inputPaddingV = x2; //  8px
+  static const double searchFieldWidth = 280;
 
   // Cards / surfaces
   static const double cardPaddingH = x4; // 16px

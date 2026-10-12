@@ -6,6 +6,31 @@ import 'app_typography.dart';
 /// Point d'entrée unique du thème Aminci
 /// Usage : MaterialApp(theme: AppTheme.light)
 
+/// Puce sélectionnée : fond [primaryLight], bordure et texte [primary].
+/// Non sélectionnée : fond [surface], bordure fine [border], texte [text].
+ChipThemeData _chipTheme({
+  required Color primary,
+  required Color primaryLight,
+  required Color surface,
+  required Color border,
+  required Color text,
+}) {
+  return ChipThemeData(
+    backgroundColor: surface,
+    selectedColor: primaryLight,
+    checkmarkColor: primary,
+    labelStyle: WidgetStateTextStyle.resolveWith(
+      (states) => AppTypography.labelMd.copyWith(color: states.contains(WidgetState.selected) ? primary : text),
+    ),
+    side: WidgetStateBorderSide.resolveWith(
+      (states) => states.contains(WidgetState.selected)
+          ? BorderSide(color: primary, width: AppSpacing.borderDefault)
+          : BorderSide(color: border, width: AppSpacing.borderThin),
+    ),
+    shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
+  );
+}
+
 abstract final class AppTheme {
   static ThemeData get light => ThemeData(
     useMaterial3: true,
@@ -127,6 +152,15 @@ abstract final class AppTheme {
       }),
       side: const BorderSide(color: AppColors.borderDefault, width: AppSpacing.borderDefault),
       shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderXs),
+    ),
+
+    // Chips (sélecteurs à choix, filtres)
+    chipTheme: _chipTheme(
+      primary: AppColors.primary,
+      primaryLight: AppColors.primaryLight,
+      surface: AppColors.bgSurface,
+      border: AppColors.borderDefault,
+      text: AppColors.textSecondary,
     ),
 
     // Progress indicator
@@ -339,6 +373,14 @@ abstract final class AppThemeDark {
       }),
       side: BorderSide(color: AppColorsDark.borderDefault, width: AppSpacing.borderDefault),
       shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderXs),
+    ),
+
+    chipTheme: _chipTheme(
+      primary: AppColorsDark.primary,
+      primaryLight: AppColorsDark.primaryLight,
+      surface: AppColorsDark.bgSurface,
+      border: AppColorsDark.borderDefault,
+      text: AppColorsDark.textSecondary,
     ),
 
     progressIndicatorTheme: ProgressIndicatorThemeData(

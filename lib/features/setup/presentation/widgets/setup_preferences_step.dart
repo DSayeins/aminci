@@ -52,16 +52,6 @@ class SetupPreferencesStep extends StatelessWidget {
               label: Text(format),
               selected: selected,
               onSelected: enabled ? (_) => onDateFormatChanged(format) : null,
-              selectedColor: AppColors.primaryLight,
-              labelStyle: AppTypography.labelMd.copyWith(
-                color: selected ? AppColors.primary : AppColors.textSecondary,
-              ),
-              side: BorderSide(
-                color: selected ? AppColors.primary : AppColors.borderDefault,
-                width: selected ? AppSpacing.borderDefault : AppSpacing.borderThin,
-              ),
-              backgroundColor: AppColors.bgSurface,
-              shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
             );
           }).toList(),
         ),
@@ -77,16 +67,6 @@ class SetupPreferencesStep extends StatelessWidget {
               label: Text(_themeModeLabel(mode)),
               selected: selected,
               onSelected: enabled ? (_) => onThemeModeChanged(mode) : null,
-              selectedColor: AppColors.primaryLight,
-              labelStyle: AppTypography.labelMd.copyWith(
-                color: selected ? AppColors.primary : AppColors.textSecondary,
-              ),
-              side: BorderSide(
-                color: selected ? AppColors.primary : AppColors.borderDefault,
-                width: selected ? AppSpacing.borderDefault : AppSpacing.borderThin,
-              ),
-              backgroundColor: AppColors.bgSurface,
-              shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
             );
           }).toList(),
         ),

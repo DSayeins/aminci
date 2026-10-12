@@ -217,16 +217,6 @@ class _AddProfileDialogState extends State<_AddProfileDialog> {
                             onSelected: isLoading
                                 ? null
                                 : (value) => setState(() => _selectedAddressPool = value ? pool : null),
-                            selectedColor: AppColors.primaryLight,
-                            labelStyle: AppTypography.labelMd.copyWith(
-                              color: selected ? AppColors.primary : AppColors.textSecondary,
-                            ),
-                            side: BorderSide(
-                              color: selected ? AppColors.primary : AppColors.borderDefault,
-                              width: selected ? AppSpacing.borderDefault : AppSpacing.borderThin,
-                            ),
-                            backgroundColor: AppColors.bgSurface,
-                            shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
                           );
                         }).toList(),
                       ),

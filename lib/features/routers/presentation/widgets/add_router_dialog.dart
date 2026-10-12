@@ -297,16 +297,6 @@ class _RosVersionSelector extends StatelessWidget {
             label: Text(v.name.toUpperCase()),
             selected: selected,
             onSelected: enabled ? (_) => onChanged(v) : null,
-            selectedColor: AppColors.primaryLight,
-            labelStyle: AppTypography.labelMd.copyWith(
-              color: selected ? AppColors.primary : AppColors.textSecondary,
-            ),
-            side: BorderSide(
-              color: selected ? AppColors.primary : AppColors.borderDefault,
-              width: selected ? AppSpacing.borderDefault : AppSpacing.borderThin,
-            ),
-            backgroundColor: AppColors.bgSurface,
-            shape: RoundedRectangleBorder(borderRadius: AppSpacing.borderSm),
           ),
         );
       }).toList(),

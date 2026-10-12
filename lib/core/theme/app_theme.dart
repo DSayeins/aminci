@@ -19,8 +19,10 @@ ChipThemeData _chipTheme({
     backgroundColor: surface,
     selectedColor: primaryLight,
     checkmarkColor: primary,
-    labelStyle: WidgetStateTextStyle.resolveWith(
-      (states) => AppTypography.labelMd.copyWith(color: states.contains(WidgetState.selected) ? primary : text),
+    // RawChip ne résout que la couleur (WidgetStateColor) d'un TextStyle, jamais
+    // un WidgetStateTextStyle entier — sinon le libellé arrive sans couleur.
+    labelStyle: AppTypography.labelMd.copyWith(
+      color: WidgetStateColor.resolveWith((states) => states.contains(WidgetState.selected) ? primary : text),
     ),
     side: WidgetStateBorderSide.resolveWith(
       (states) => states.contains(WidgetState.selected)

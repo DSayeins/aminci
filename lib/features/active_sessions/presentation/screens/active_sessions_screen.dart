@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:aminci/core/models/router.dart';
 import 'package:aminci/core/theme/app_spacing.dart';
+import 'package:aminci/features/active_sessions/presentation/active_session_filter.dart';
 import 'package:aminci/features/active_sessions/presentation/bloc/active_sessions_bloc.dart';
+import 'package:aminci/features/active_sessions/presentation/widgets/active_session_filter_bar.dart';
 import 'package:aminci/features/active_sessions/presentation/widgets/active_session_tile.dart';
 import 'package:aminci/features/routers/presentation/bloc/routers_bloc.dart';
 import 'package:aminci/shared/widgets/empty_state.dart';
@@ -24,6 +26,7 @@ class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
   // remonter vers le Provider — voir "Looking up a deactivated widget's
   // ancestor is unsafe".
   late final ActiveSessionsBloc _activeSessionsBloc;
+  ProfileFilter _profileFilter = const AllProfiles();
 
   @override
   void initState() {
@@ -81,20 +84,39 @@ class _ActiveSessionsScreenState extends State<ActiveSessionsScreen> {
           );
         }
 
-        return ListView.separated(
-          padding: AppSpacing.insetPage,
-          itemCount: loaded.sessions.length,
-          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapSm),
-          itemBuilder: (context, index) {
-            final session = loaded.sessions[index];
-            return ActiveSessionTile(
-              session: session,
-              isBusy: loaded.isBusy,
-              onDisconnect: () => context.read<ActiveSessionsBloc>().add(
-                    ActiveSessionsDisconnectRequested(router, session),
-                  ),
-            );
-          },
+        final filtered = filterSessions(loaded.sessions, _profileFilter);
+
+        return Column(
+          children: [
+            ActiveSessionFilterBar(
+              options: profileFilterOptions(loaded.sessions, _profileFilter),
+              selected: _profileFilter,
+              onChanged: (filter) => setState(() => _profileFilter = filter),
+            ),
+            Expanded(
+              child: filtered.isEmpty
+                  ? const EmptyState(
+                      icon: Icons.filter_alt_off_rounded,
+                      title: 'Aucune session pour ce profil',
+                      subtitle: 'Personne n\'est connecté avec ce profil en ce moment.',
+                    )
+                  : ListView.separated(
+                      padding: AppSpacing.insetPage,
+                      itemCount: filtered.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.gapSm),
+                      itemBuilder: (context, index) {
+                        final session = filtered[index];
+                        return ActiveSessionTile(
+                          session: session,
+                          isBusy: loaded.isBusy,
+                          onDisconnect: () => context.read<ActiveSessionsBloc>().add(
+                                ActiveSessionsDisconnectRequested(router, session),
+                              ),
+                        );
+                      },
+                    ),
+            ),
+          ],
         );
       },
     );

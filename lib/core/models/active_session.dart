@@ -22,6 +22,11 @@ class ActiveSession extends Equatable {
   final int bytesIn;
   final int bytesOut;
 
+  /// Profil du voucher, retrouvé dans le cache local `vouchers` — absent de
+  /// `/ip/hotspot/active`. Null si le code est inconnu localement (ex: user
+  /// créé hors de l'app).
+  final String? profileName;
+
   const ActiveSession({
     required this.mikrotikId,
     required this.code,
@@ -31,7 +36,22 @@ class ActiveSession extends Equatable {
     this.uptime,
     this.bytesIn = 0,
     this.bytesOut = 0,
+    this.profileName,
   });
+
+  ActiveSession copyWith({String? profileName}) {
+    return ActiveSession(
+      mikrotikId: mikrotikId,
+      code: code,
+      address: address,
+      macAddress: macAddress,
+      server: server,
+      uptime: uptime,
+      bytesIn: bytesIn,
+      bytesOut: bytesOut,
+      profileName: profileName ?? this.profileName,
+    );
+  }
 
   /// Données consommées formatées (download + upload) pour cette session.
   String get bytesTotalFmt => ByteFormatter.format(bytesIn + bytesOut);

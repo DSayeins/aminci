@@ -20,7 +20,7 @@ flutter build windows
 # Analyze (lint)
 flutter analyze
 
-# Run tests (no tests written yet)
+# Run tests (SQLite en mémoire via test/helpers/test_database.dart)
 flutter test
 ```
 

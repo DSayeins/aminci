@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 
+import 'package:aminci/features/active_sessions/data/datasources/active_session_local_datasource.dart';
 import 'package:aminci/features/active_sessions/data/datasources/active_session_remote_datasource.dart';
 import 'package:aminci/features/active_sessions/data/repositories/active_sessions_repository_impl.dart';
 import 'package:aminci/features/active_sessions/domain/repository/active_sessions_repository.dart';
@@ -9,7 +10,8 @@ import 'package:aminci/features/active_sessions/presentation/bloc/active_session
 
 void registerActiveSessionsModule(GetIt sl) {
   sl.registerLazySingleton(() => const ActiveSessionRemoteDatasource());
-  sl.registerLazySingleton<ActiveSessionsRepository>(() => ActiveSessionsRepositoryImpl(sl()));
+  sl.registerLazySingleton(() => ActiveSessionLocalDatasource(sl()));
+  sl.registerLazySingleton<ActiveSessionsRepository>(() => ActiveSessionsRepositoryImpl(sl(), sl()));
 
   sl.registerFactory(() => GetActiveSessions(sl()));
   sl.registerFactory(() => DisconnectSession(sl()));

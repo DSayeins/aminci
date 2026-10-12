@@ -41,9 +41,24 @@ class ActiveSessionTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  session.code,
-                  style: AppTypography.techData.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                Row(
+                  children: [
+                    Text(
+                      session.code,
+                      style: AppTypography.techData.copyWith(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+                    ),
+                    if (session.profileName != null) ...[
+                      const SizedBox(width: AppSpacing.gapSm),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.x3, vertical: AppSpacing.x1),
+                        decoration: BoxDecoration(color: AppColors.bgSubtle, borderRadius: AppSpacing.borderFull),
+                        child: Text(
+                          session.profileName!,
+                          style: AppTypography.badge.copyWith(color: AppColors.textSecondary),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: AppSpacing.gapXs),
                 Text(
